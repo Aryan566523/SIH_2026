@@ -1,0 +1,31 @@
+{
+  "name": "chainsentinel-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Real-Time Multi-Chain Crypto Fraud Attribution & Investigation Intelligence Platform",
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "dev:web": "pnpm --filter @chainsentinel/web run dev",
+    "dev:api": "pnpm --filter @chainsentinel/api run start:dev",
+    "dev:worker": "pnpm --filter @chainsentinel/worker run start:dev",
+    "build": "pnpm --parallel -r run build",
+    "build:web": "pnpm --filter @chainsentinel/web run build",
+    "build:api": "pnpm --filter @chainsentinel/api run build",
+    "build:worker": "pnpm --filter @chainsentinel/worker run build",
+    "test": "pnpm --parallel -r run test",
+    "test:unit": "pnpm --parallel -r run test:unit",
+    "test:integration": "pnpm --parallel -r run test:integration",
+    "test:e2e": "pnpm --filter @chainsentinel/web run test:e2e",
+    "lint": "pnpm --parallel -r run lint",
+    "typecheck": "pnpm --parallel -r run typecheck",
+    "db:migrate": "pnpm --filter @chainsentinel/api run db:migrate",
+    "db:seed": "pnpm --filter @chainsentinel/api run db:seed",
+    "db:reset": "pnpm --filter @chainsentinel/api run db:reset",
+    "clean": "pnpm --parallel -r run clean"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

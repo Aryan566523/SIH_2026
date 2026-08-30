@@ -1,0 +1,463 @@
+[
+  {
+    "category": "Platform",
+    "items": [
+      {
+        "abbr": "ChainSentinel AI",
+        "full": "Blockchain Forensics & Intelligence Platform",
+        "description": "The full name of this platform — an AI-powered system built for Indian law enforcement agencies to automatically trace, attribute, and report on cryptocurrency fraud cases.",
+        "tags": ["platform", "core"]
+      },
+      {
+        "abbr": "SIH",
+        "full": "Smart India Hackathon",
+        "description": "The national competition under which this project was built. SIH PS-26183 was issued by the Ministry of Home Affairs, I4C Division.",
+        "tags": ["platform"]
+      },
+      {
+        "abbr": "I4C",
+        "full": "Indian Cyber Crime Coordination Centre",
+        "description": "The central body under the Ministry of Home Affairs responsible for coordinating cybercrime prevention and investigation across India. This platform was built per their problem statement.",
+        "tags": ["platform", "government"]
+      },
+      {
+        "abbr": "NCRP",
+        "full": "National Cyber Crime Reporting Portal",
+        "description": "The citizen-facing portal (cybercrime.gov.in) where victims report cyber fraud. Suspect wallet addresses reported here feed into ChainSentinel AI investigations.",
+        "tags": ["platform", "government"]
+      },
+      {
+        "abbr": "SAHYOG",
+        "full": "System for Automated Help via Yojana and Online Gateway",
+        "description": "A MHA platform used for LEA-VASP coordination to freeze cryptocurrency assets. ChainSentinel AI is designed to integrate with SAHYOG for rapid freeze requests.",
+        "tags": ["platform", "government"]
+      },
+      {
+        "abbr": "LEA",
+        "full": "Law Enforcement Agency",
+        "description": "The primary users of this platform — police investigators, cybercrime cell officers, and forensic analysts from state/central agencies.",
+        "tags": ["platform"]
+      },
+      {
+        "abbr": "MHA",
+        "full": "Ministry of Home Affairs",
+        "description": "The Government of India ministry that issued this problem statement and oversees I4C and NCRP.",
+        "tags": ["platform", "government"]
+      }
+    ]
+  },
+  {
+    "category": "Blockchain & Crypto",
+    "items": [
+      {
+        "abbr": "VASP",
+        "full": "Virtual Asset Service Provider",
+        "description": "Any exchange, broker, or platform that offers cryptocurrency trading or custody services (e.g., Binance, WazirX, Coinbase). VASP identification is the primary goal of each investigation — if the suspect wallet ultimately reaches a VASP, a legal notice can freeze the funds.",
+        "tags": ["blockchain", "key"]
+      },
+      {
+        "abbr": "ETH",
+        "full": "Ether / Ethereum",
+        "description": "The native token of the Ethereum blockchain. One of the primary chains supported by ChainSentinel AI.",
+        "tags": ["blockchain"]
+      },
+      {
+        "abbr": "TRX",
+        "full": "TRON (TRX Token)",
+        "description": "The native token of the TRON blockchain. Frequently used in cyber fraud due to low fees and high throughput. TronGrid API is used for real-time data fetching.",
+        "tags": ["blockchain"]
+      },
+      {
+        "abbr": "BTC",
+        "full": "Bitcoin",
+        "description": "The first and most widely known cryptocurrency. ChainSentinel AI supports UTXO-model tracing for Bitcoin via the Blockchain.info API.",
+        "tags": ["blockchain"]
+      },
+      {
+        "abbr": "MATIC",
+        "full": "Polygon (MATIC Token)",
+        "description": "The native token of the Polygon network — an Ethereum Layer-2 chain. Supported via Polygonscan API.",
+        "tags": ["blockchain"]
+      },
+      {
+        "abbr": "UTXO",
+        "full": "Unspent Transaction Output",
+        "description": "Bitcoin's accounting model. Each transaction consumes previous outputs and creates new ones. Different from the account-based model used by Ethereum and TRON.",
+        "tags": ["blockchain"]
+      },
+      {
+        "abbr": "DeFi",
+        "full": "Decentralised Finance",
+        "description": "Financial services (lending, trading, bridging) built on blockchains without centralised intermediaries. Fraudsters use DeFi protocols to launder funds before reaching a VASP.",
+        "tags": ["blockchain"]
+      },
+      {
+        "abbr": "DEX",
+        "full": "Decentralised Exchange",
+        "description": "A smart-contract-based exchange that swaps tokens without a central authority (e.g., Uniswap, PancakeSwap). DEX hops are detected during Pattern Analysis.",
+        "tags": ["blockchain"]
+      },
+      {
+        "abbr": "CEX",
+        "full": "Centralised Exchange",
+        "description": "A regulated or semi-regulated exchange with KYC/AML obligations (e.g., Binance, WazirX). The primary target of VASP attribution — these entities can freeze funds.",
+        "tags": ["blockchain"]
+      },
+      {
+        "abbr": "KYC",
+        "full": "Know Your Customer",
+        "description": "The process exchanges use to verify user identity. If a suspect wallet reaches a KYC-compliant VASP, LEAs can obtain user details via a legal notice.",
+        "tags": ["blockchain", "legal"]
+      },
+      {
+        "abbr": "AML",
+        "full": "Anti-Money Laundering",
+        "description": "Regulatory framework requiring financial institutions (including VASPs) to detect and report suspicious transactions. ChainSentinel AI's risk engine supports AML investigations.",
+        "tags": ["blockchain", "legal"]
+      },
+      {
+        "abbr": "NFT",
+        "full": "Non-Fungible Token",
+        "description": "A unique blockchain token representing ownership of a digital asset. NFT wash trading is one of the fraud typologies ChainSentinel AI can flag.",
+        "tags": ["blockchain"]
+      },
+      {
+        "abbr": "TXID / Hash",
+        "full": "Transaction Identifier / Hash",
+        "description": "A unique 64-character hexadecimal string that identifies a blockchain transaction. Used as the primary key in the normalised_transactions table.",
+        "tags": ["blockchain"]
+      },
+      {
+        "abbr": "Gas",
+        "full": "Gas Fee (Ethereum Network Fee)",
+        "description": "The fee paid to Ethereum miners/validators to execute a transaction. High gas fees sometimes indicate MEV (Maximal Extractable Value) activity, which can be a fraud signal.",
+        "tags": ["blockchain"]
+      }
+    ]
+  },
+  {
+    "category": "Fraud Typologies",
+    "items": [
+      {
+        "abbr": "Fan-Out",
+        "full": "Fan-Out Pattern (Money Mule Dispersion)",
+        "description": "A fraud pattern where a single wallet distributes funds to many sub-wallets simultaneously to obfuscate the trail. Detected when the suspect sends to ≥3 unique destinations.",
+        "tags": ["fraud", "pattern"]
+      },
+      {
+        "abbr": "Rapid Forwarding",
+        "full": "Rapid Forwarding Pattern (Layering Speed)",
+        "description": "When funds are forwarded between wallets within a very short time window (<1 hour), indicating deliberate layering to complicate tracing.",
+        "tags": ["fraud", "pattern"]
+      },
+      {
+        "abbr": "Mixer Interaction",
+        "full": "Cryptocurrency Mixer / Tumbler Interaction",
+        "description": "When funds pass through a mixing service (e.g., Tornado Cash) that pools and re-distributes coins to break the transaction trail. Highest-risk pattern.",
+        "tags": ["fraud", "pattern"]
+      },
+      {
+        "abbr": "Bridge Hop",
+        "full": "Cross-Chain Bridge Transfer",
+        "description": "Funds moved from one blockchain to another (e.g., ETH→TRON via THORChain). Complicates investigations requiring analysts to switch chain explorers.",
+        "tags": ["fraud", "pattern"]
+      },
+      {
+        "abbr": "Peeling Chain",
+        "full": "Peeling Chain (Progressive Forwarding)",
+        "description": "A pattern where small amounts are 'peeled off' at each hop while the bulk continues forward — used to disguise the total fraud amount.",
+        "tags": ["fraud", "pattern"]
+      },
+      {
+        "abbr": "Ransomware",
+        "full": "Ransomware Payment",
+        "description": "Malware that encrypts victim data and demands cryptocurrency payment for decryption keys. ChainSentinel AI traces ransom wallet addresses to the receiving VASP.",
+        "tags": ["fraud"]
+      },
+      {
+        "abbr": "Sextortion",
+        "full": "Sexual Extortion Fraud",
+        "description": "Fraudsters who coerce victims with intimate images and demand crypto payments. Suspect wallet addresses from these cases are among the most common inputs.",
+        "tags": ["fraud"]
+      },
+      {
+        "abbr": "Pig Butchering",
+        "full": "Pig Butchering / Investment Scam",
+        "description": "Long-con investment fraud where victims are lured onto fake trading platforms and gradually convinced to deposit large sums before being 'slaughtered' (funds stolen).",
+        "tags": ["fraud"]
+      }
+    ]
+  },
+  {
+    "category": "Investigation Pipeline",
+    "items": [
+      {
+        "abbr": "BFS",
+        "full": "Breadth-First Search",
+        "description": "The graph traversal algorithm used in the Fund Flow Trace stage. Starting from the suspect wallet, BFS explores all neighbours (directly connected wallets) before going deeper.",
+        "tags": ["pipeline", "algorithm"]
+      },
+      {
+        "abbr": "DAG",
+        "full": "Directed Acyclic Graph",
+        "description": "The data structure used to represent fund flows. Funds travel in one direction (source → destination) without circular paths, making it a DAG.",
+        "tags": ["pipeline", "algorithm"]
+      },
+      {
+        "abbr": "TF-IDF",
+        "full": "Term Frequency–Inverse Document Frequency",
+        "description": "ML algorithm used in entity matching to score how uniquely an address label identifies a known VASP or entity. Higher TF-IDF score = more confident match.",
+        "tags": ["pipeline", "algorithm"]
+      },
+      {
+        "abbr": "VASP Attribution",
+        "full": "VASP Attribution Stage",
+        "description": "Pipeline stage 11 — matches graph nodes against the known VASP database (wallets, names, jurisdictions) and produces a confidence score and legal classification (SERVEABLE / UNSERVEABLE).",
+        "tags": ["pipeline"]
+      },
+      {
+        "abbr": "Risk Score",
+        "full": "Composite Risk Score (0–100)",
+        "description": "A score calculated from transaction volume, hop count, fraud patterns found, mixer interactions, and cross-chain activity. 0–39=LOW, 40–59=MEDIUM, 60–79=HIGH, 80+=CRITICAL.",
+        "tags": ["pipeline"]
+      },
+      {
+        "abbr": "SHA-256",
+        "full": "Secure Hash Algorithm 256-bit",
+        "description": "A cryptographic hash function used to generate the integrity fingerprint of each forensic report. Courts can verify a report hasn't been tampered with by re-computing its SHA-256 hash.",
+        "tags": ["pipeline", "legal"]
+      },
+      {
+        "abbr": "Normalization",
+        "full": "Transaction Normalization Stage",
+        "description": "Pipeline stage 4 — converts raw API responses from different blockchains into a unified internal schema stored in the normalised_transactions table.",
+        "tags": ["pipeline"]
+      }
+    ]
+  },
+  {
+    "category": "Legal & Compliance",
+    "items": [
+      {
+        "abbr": "S.91 CrPC",
+        "full": "Section 91, Code of Criminal Procedure",
+        "description": "The legal provision under which Indian courts direct VASPs (exchanges) to produce documents and freeze cryptocurrency assets linked to fraud investigations. ChainSentinel AI auto-generates draft notices.",
+        "tags": ["legal", "key"]
+      },
+      {
+        "abbr": "FIR",
+        "full": "First Information Report",
+        "description": "The initial complaint document filed with police in India. The complaint's victim wallet address is the starting point for a ChainSentinel AI investigation.",
+        "tags": ["legal"]
+      },
+      {
+        "abbr": "PMLA",
+        "full": "Prevention of Money Laundering Act",
+        "description": "Indian legislation that criminalises money laundering. Blockchain forensic evidence generated by this platform can support PMLA prosecution.",
+        "tags": ["legal"]
+      },
+      {
+        "abbr": "FATF",
+        "full": "Financial Action Task Force",
+        "description": "The global AML/CFT standard-setting body. Its Travel Rule requires VASPs to share sender/receiver information for transactions above a threshold — relevant to cross-border crypto fraud.",
+        "tags": ["legal", "compliance"]
+      },
+      {
+        "abbr": "CFT",
+        "full": "Countering the Financing of Terrorism",
+        "description": "Regulatory requirements alongside AML. Crypto transactions linked to terrorist financing triggers a CRITICAL risk score in ChainSentinel AI.",
+        "tags": ["legal", "compliance"]
+      },
+      {
+        "abbr": "SERVEABLE",
+        "full": "Legally Serveable Jurisdiction",
+        "description": "A VASP classification meaning India has a Mutual Legal Assistance Treaty (MLAT) or direct LEA channel with the VASP's jurisdiction, enabling a legal notice to freeze funds.",
+        "tags": ["legal"]
+      },
+      {
+        "abbr": "MLAT",
+        "full": "Mutual Legal Assistance Treaty",
+        "description": "A bilateral agreement between countries allowing law enforcement cooperation. VASPs in MLAT-partner jurisdictions are classified as SERVEABLE.",
+        "tags": ["legal"]
+      }
+    ]
+  },
+  {
+    "category": "Technology & APIs",
+    "items": [
+      {
+        "abbr": "API",
+        "full": "Application Programming Interface",
+        "description": "A standardized way for systems to communicate. ChainSentinel AI uses REST APIs from Etherscan, TronGrid, and Chainabuse to fetch live blockchain data.",
+        "tags": ["tech"]
+      },
+      {
+        "abbr": "REST",
+        "full": "Representational State Transfer",
+        "description": "The architectural style used by ChainSentinel's backend API (NestJS). All frontend-to-backend communication uses REST over HTTP.",
+        "tags": ["tech"]
+      },
+      {
+        "abbr": "JWT",
+        "full": "JSON Web Token",
+        "description": "The authentication mechanism used by ChainSentinel AI. On login, the server issues a short-lived access token (15 min) and a refresh token (7 days).",
+        "tags": ["tech", "auth"]
+      },
+      {
+        "abbr": "WebSocket",
+        "full": "WebSocket Real-time Protocol",
+        "description": "Used to push live pipeline stage updates to the frontend during an investigation. As each of the 14 stages completes, the UI updates in real time without polling.",
+        "tags": ["tech"]
+      },
+      {
+        "abbr": "Neo4j",
+        "full": "Neo4j Graph Database",
+        "description": "An optional graph database (Bolt protocol) used to persist fund-flow graphs. Falls back to in-memory/PostgreSQL if Neo4j is offline.",
+        "tags": ["tech", "database"]
+      },
+      {
+        "abbr": "PostgreSQL",
+        "full": "PostgreSQL Relational Database",
+        "description": "The primary database. Hosted on Supabase (ap-northeast-1 region). Stores all investigations, wallets, transactions, reports, VASPs, alerts, and watchlists.",
+        "tags": ["tech", "database"]
+      },
+      {
+        "abbr": "Supabase",
+        "full": "Supabase (Postgres-as-a-Service)",
+        "description": "The cloud Postgres hosting provider used in this project. Connection: aws-0-ap-northeast-1.pooler.supabase.com:5432. Credentials are stored in the root .env file.",
+        "tags": ["tech", "database"]
+      },
+      {
+        "abbr": "TypeORM",
+        "full": "TypeScript Object-Relational Mapping",
+        "description": "The ORM library used to define database entities and run queries from NestJS. All tables are auto-created via TypeORM's synchronize mode.",
+        "tags": ["tech"]
+      },
+      {
+        "abbr": "NestJS",
+        "full": "NestJS (Node.js Backend Framework)",
+        "description": "The backend framework powering ChainSentinel's API server (runs on port 3001). Uses decorators and dependency injection.",
+        "tags": ["tech"]
+      },
+      {
+        "abbr": "Next.js",
+        "full": "Next.js (React Frontend Framework)",
+        "description": "The frontend framework (runs on port 3000). Uses the App Router, server components, and client components for the dashboard UI.",
+        "tags": ["tech"]
+      },
+      {
+        "abbr": "pnpm",
+        "full": "Performant Node Package Manager",
+        "description": "The package manager used in this monorepo workspace. Faster and more disk-efficient than npm or yarn.",
+        "tags": ["tech"]
+      },
+      {
+        "abbr": "ReactFlow",
+        "full": "React Flow (Graph Visualization Library)",
+        "description": "The library used to render the interactive Transaction Graph with nodes, edges, zoom, pan, and minimap.",
+        "tags": ["tech"]
+      },
+      {
+        "abbr": "Turbo / Turborepo",
+        "full": "Turborepo (Monorepo Build System)",
+        "description": "Manages the monorepo containing apps/api and apps/web. The run.bat script uses Turborepo to start both simultaneously.",
+        "tags": ["tech"]
+      },
+      {
+        "abbr": "TronGrid",
+        "full": "TronGrid API (TRON Blockchain Data Provider)",
+        "description": "The official TRON Foundation API for fetching transaction history from TRON addresses. Endpoint: api.trongrid.io. API key stored in the blockchain_api_configs table.",
+        "tags": ["tech", "api"]
+      },
+      {
+        "abbr": "Etherscan V2",
+        "full": "Etherscan API V2 (Ethereum Data Provider)",
+        "description": "Multi-chain Ethereum ecosystem data API. Supports ETH, Polygon, BSC, and others via chainid parameter. Endpoint: api.etherscan.io/v2/api.",
+        "tags": ["tech", "api"]
+      },
+      {
+        "abbr": "Chainabuse",
+        "full": "Chainabuse API (Multi-Chain Fraud Database)",
+        "description": "Community-sourced database of flagged wallet addresses linked to scams, ransomware, and phishing. Used as a supplementary OSINT source.",
+        "tags": ["tech", "api"]
+      },
+      {
+        "abbr": "Redis",
+        "full": "Redis (In-Memory Data Structure Store)",
+        "description": "Used optionally for job queuing and caching. Falls back gracefully if not running.",
+        "tags": ["tech"]
+      },
+      {
+        "abbr": "OSINT",
+        "full": "Open Source Intelligence",
+        "description": "Publicly available information used in investigations. Chainabuse reports, public blockchain labels (Etherscan tags), and wallet clustering datasets are OSINT sources.",
+        "tags": ["tech", "intelligence"]
+      }
+    ]
+  },
+  {
+    "category": "Dashboard Pages",
+    "items": [
+      {
+        "abbr": "Command Center",
+        "full": "Command Center (Main Dashboard)",
+        "description": "The home dashboard — shows live stats (active investigations, flagged wallets, risk distribution, recent activity) pulled from the Postgres database.",
+        "tags": ["ui"]
+      },
+      {
+        "abbr": "VASP Intelligence",
+        "full": "VASP Intelligence (Exchange Database)",
+        "description": "Displays all known VASPs in the database with their jurisdiction, known wallet addresses, confidence score, and chain coverage.",
+        "tags": ["ui"]
+      },
+      {
+        "abbr": "Wallet Intelligence",
+        "full": "Wallet Intelligence (Address Lookup)",
+        "description": "Search for any wallet address across all investigations. Shows transaction history, risk score, attribution history, and watchlist status.",
+        "tags": ["ui"]
+      },
+      {
+        "abbr": "Transaction Graph",
+        "full": "Transaction Graph (Fund Flow Visualiser)",
+        "description": "Interactive BFS-layout graph that shows how funds flow from a suspect wallet through intermediaries to exchanges. Nodes are colour-coded by type.",
+        "tags": ["ui"]
+      },
+      {
+        "abbr": "Blockchain Explorer",
+        "full": "Blockchain Explorer (Live Chain Search)",
+        "description": "Search any transaction hash or address directly against live blockchain APIs without creating a formal investigation.",
+        "tags": ["ui"]
+      },
+      {
+        "abbr": "Fraud Campaigns",
+        "full": "Fraud Campaigns (Organised Fraud Groups)",
+        "description": "Groups of related fraud wallets clustered into a single campaign. Helps identify organised cybercrime rings operating across multiple victims.",
+        "tags": ["ui"]
+      },
+      {
+        "abbr": "Cross-Chain Monitor",
+        "full": "Cross-Chain Monitor (Bridge Transfer Tracker)",
+        "description": "Tracks fund movements across blockchain bridges (THORChain, Multichain, etc.) to follow money that moves between Ethereum, TRON, Bitcoin, and other chains.",
+        "tags": ["ui"]
+      },
+      {
+        "abbr": "Section 91 Notice",
+        "full": "Generate Section 91 CrPC Notice",
+        "description": "Generates a pre-filled draft legal notice addressed to the identified VASP, requesting account freeze and KYC records, per Section 91 of the Code of Criminal Procedure.",
+        "tags": ["ui", "legal"]
+      },
+      {
+        "abbr": "System Health",
+        "full": "System Health Monitor",
+        "description": "Real-time status of all backend services: PostgreSQL, Neo4j, Redis, WebSocket gateway, ETH provider, and TRON provider. Auto-refreshes every 15 seconds.",
+        "tags": ["ui"]
+      },
+      {
+        "abbr": "Dynamic API Registry",
+        "full": "Dynamic API Registry (Blockchain Providers)",
+        "description": "Admin panel to manage blockchain data provider configurations (endpoint URLs, API keys, chain IDs, rate limits). Located under Administration → System Settings.",
+        "tags": ["ui", "admin"]
+      }
+    ]
+  }
+]

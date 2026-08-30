@@ -1,13 +1,15 @@
-'use client';
+﻿'use client';
 
 import { create } from 'zustand';
 
 interface UIState {
   sidebarCollapsed: boolean;
+  isDemoMode: boolean;
   commandPaletteOpen: boolean;
   activeModal: string | null;
   toasts: Array<{ id: string; type: string; message: string }>;
   toggleSidebar: () => void;
+  toggleDemoMode: () => void;
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
   openModal: (id: string) => void;
@@ -18,11 +20,13 @@ interface UIState {
 
 export const useUIStore = create<UIState>((set) => ({
   sidebarCollapsed: false,
+  isDemoMode: false,
   commandPaletteOpen: false,
   activeModal: null,
   toasts: [],
 
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+  toggleDemoMode: () => set((s) => ({ isDemoMode: !s.isDemoMode })),
   openCommandPalette: () => set({ commandPaletteOpen: true }),
   closeCommandPalette: () => set({ commandPaletteOpen: false }),
   openModal: (id: string) => set({ activeModal: id }),
@@ -39,3 +43,4 @@ export const useUIStore = create<UIState>((set) => ({
   removeToast: (id: string) =>
     set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 }));
+

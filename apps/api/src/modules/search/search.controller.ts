@@ -19,7 +19,12 @@ export class SearchController {
     @Query('limit') limit?: number,
     @CurrentUser('organizationId') orgId?: string,
   ) {
-    const results = await this.searchService.search(query, type, limit, orgId);
-    return { success: true, data: results };
+    try {
+      const results = await this.searchService.search(query, type, limit, orgId);
+      return { success: true, data: results };
+    } catch (e: any) {
+      console.error('Global search error:', e);
+      return { success: false, error: e.message, data: [] };
+    }
   }
 }

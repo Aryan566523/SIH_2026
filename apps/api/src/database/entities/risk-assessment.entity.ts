@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index,
 } from 'typeorm';
 import { RiskLevel } from '@chainsentinel/types';
@@ -15,13 +15,13 @@ export class RiskAssessment {
   @Column({ type: 'decimal', precision: 5, scale: 2, name: 'risk_score' })
   riskScore: number;
 
-  @Column({ type: 'enum', enum: RiskLevel, name: 'risk_level' })
+  @Column({ type: 'simple-enum', enum: RiskLevel, name: 'risk_level' })
   riskLevel: RiskLevel;
 
-  @Column({ type: 'jsonb', default: '[]' })
+  @Column({ type: 'simple-json', default: '[]' })
   factors: Array<{ factor: string; score: number; weight: number; description: string }>;
 
-  @Column({ type: 'jsonb', default: '[]', name: 'fraud_patterns' })
+  @Column({ type: 'simple-json', default: '[]', name: 'fraud_patterns' })
   fraudPatterns: Array<{ patternType: string; confidence: number; riskContribution: number; description: string }>;
 
   @Column({ type: 'timestamp', name: 'assessed_at' })
@@ -30,3 +30,4 @@ export class RiskAssessment {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }
+

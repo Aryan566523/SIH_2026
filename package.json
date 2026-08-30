@@ -20,6 +20,7 @@
     "typecheck": "pnpm --parallel -r run typecheck",
     "db:migrate": "pnpm --filter @chainsentinel/api run db:migrate",
     "db:seed": "pnpm --filter @chainsentinel/api run db:seed",
+    "db:admin": "pnpm --filter @chainsentinel/api run db:admin",
     "db:reset": "pnpm --filter @chainsentinel/api run db:reset",
     "clean": "pnpm --parallel -r run clean"
   },

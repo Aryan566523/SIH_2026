@@ -74,6 +74,18 @@ async function seed() {
   // Create users - password from env or default for dev only
   const seedPassword = process.env.SEED_PASSWORD || process.env.DEFAULT_PASSWORD || 'ChangeMeImmediately!';
   const passwordHash = await bcrypt.hash(seedPassword, 12);
+  const sihAdminPasswordHash = await bcrypt.hash('Admin@123', 12);
+
+  const sihAdmin = userRepo.create({
+    email: 'admin@sih.com',
+    firstName: 'SIH',
+    lastName: 'Admin',
+    passwordHash: sihAdminPasswordHash,
+    role: 'SUPER_ADMIN' as any,
+    organizationId: org.id,
+    isActive: true,
+  });
+  await userRepo.save(sihAdmin);
 
   const admin = userRepo.create({
     email: 'admin@chainsentinel.gov.in',
@@ -430,6 +442,7 @@ async function seed() {
 
   console.log('\n✅ Seed completed!');
   console.log('\nDefault users created (change passwords immediately):');
+  console.log('  SIH Admin:     admin@sih.com (Password: Admin@123)');
   console.log('  Admin:         admin@chainsentinel.gov.in');
   console.log('  Investigator:  investigator@chainsentinel.gov.in');
   console.log(`\n  Demo Case:     NCRP-2026-000482`);

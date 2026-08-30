@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn,
   ManyToOne, JoinColumn, Index,
 } from 'typeorm';
@@ -14,16 +14,16 @@ export class Alert {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({  name: 'case_id', nullable: true, type: 'varchar' })
+  @Column({ name: 'case_id', nullable: true, type: 'varchar' })
   caseId: string | null;
 
-  @Column({  name: 'wallet_address', nullable: true, length: 255, type: 'varchar' })
+  @Column({ name: 'wallet_address', nullable: true, length: 255, type: 'varchar' })
   walletAddress: string | null;
 
-  @Column({ type: 'enum', enum: AlertSeverity, default: AlertSeverity.INFO })
+  @Column({ type: 'simple-enum', enum: AlertSeverity, default: AlertSeverity.INFO })
   severity: AlertSeverity;
 
-  @Column({ type: 'enum', enum: AlertStatus, default: AlertStatus.UNREAD })
+  @Column({ type: 'simple-enum', enum: AlertStatus, default: AlertStatus.UNREAD })
   status: AlertStatus;
 
   @Column({ length: 500 })
@@ -35,10 +35,10 @@ export class Alert {
   @Column({ length: 100, default: 'system' })
   type: string;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   metadata: Record<string, unknown>;
 
-  @Column({  name: 'assigned_to', nullable: true, type: 'varchar' })
+  @Column({ name: 'assigned_to', nullable: true, type: 'varchar' })
   assignedTo: string | null;
 
   @ManyToOne(() => Case, (c) => c.alerts, { onDelete: 'SET NULL', nullable: true })
@@ -51,3 +51,4 @@ export class Alert {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
+

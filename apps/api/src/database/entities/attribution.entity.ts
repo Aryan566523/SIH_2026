@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index,
 } from 'typeorm';
 
@@ -27,18 +27,19 @@ export class Attribution {
   @Column({ default: false, name: 'cross_chain' })
   crossChain: boolean;
 
-  @Column({ type: 'jsonb', default: '[]' })
+  @Column({ type: 'simple-json', default: '[]' })
   path: string[];
 
-  @Column({ type: 'jsonb', default: '[]', name: 'supporting_transactions' })
+  @Column({ type: 'simple-json', default: '[]', name: 'supporting_transactions' })
   supportingTransactions: string[];
 
   @Column({ length: 255, name: 'label_source', default: 'manual' })
   labelSource: string;
 
-  @Column({ type: 'jsonb', default: '[]' })
+  @Column({ type: 'simple-json', default: '[]' })
   factors: Array<{ factor: string; weight: number; contribution: number }>;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }
+

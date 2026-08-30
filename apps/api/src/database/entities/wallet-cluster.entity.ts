@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index,
 } from 'typeorm';
 import { BlockchainType } from '@chainsentinel/types';
@@ -9,18 +9,19 @@ export class WalletCluster {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: 'simple-json', default: '[]' })
   wallets: string[];
 
   @Column({ length: 50, default: 'UNKNOWN' })
   confidence: string;
 
-  @Column({ type: 'jsonb', default: '[]' })
+  @Column({ type: 'simple-json', default: '[]' })
   reasons: string[];
 
-  @Column({ type: 'enum', enum: BlockchainType })
+  @Column({ type: 'simple-enum', enum: BlockchainType })
   chain: BlockchainType;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }
+

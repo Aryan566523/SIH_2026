@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn,
   ManyToOne, JoinColumn, OneToMany, Index,
 } from 'typeorm';
@@ -24,28 +24,28 @@ export class Case {
   @Column({ length: 500 })
   title: string;
 
-  @Column({ type: 'enum', enum: CaseStatus, default: CaseStatus.DRAFT })
+  @Column({ type: 'simple-enum', enum: CaseStatus, default: CaseStatus.DRAFT })
   status: CaseStatus;
 
-  @Column({ type: 'enum', enum: FraudType, name: 'fraud_type' })
+  @Column({ type: 'simple-enum', enum: FraudType, name: 'fraud_type' })
   fraudType: FraudType;
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
-  @Column({  name: 'complaint_id', nullable: true, type: 'varchar' })
+  @Column({ name: 'complaint_id', nullable: true, type: 'varchar' })
   complaintId: string | null;
 
-  @Column({  name: 'assigned_investigator_id', nullable: true, type: 'varchar' })
+  @Column({ name: 'assigned_investigator_id', nullable: true, type: 'varchar' })
   assignedInvestigatorId: string | null;
 
-  @Column({  name: 'supervisor_id', nullable: true, type: 'varchar' })
+  @Column({ name: 'supervisor_id', nullable: true, type: 'varchar' })
   supervisorId: string | null;
 
   @Column({ name: 'organization_id' })
   organizationId: string;
 
-  @Column({ type: 'enum', enum: RiskLevel, default: RiskLevel.LOW, name: 'risk_level' })
+  @Column({ type: 'simple-enum', enum: RiskLevel, default: RiskLevel.LOW, name: 'risk_level' })
   riskLevel: RiskLevel;
 
   @ManyToOne(() => Organization, (org) => org.cases)
@@ -78,3 +78,4 @@ export class Case {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
+

@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn,
   Index,
 } from 'typeorm';
@@ -16,13 +16,13 @@ export class VASP {
   @Column({ length: 50 })
   type: string;
 
-  @Column({ type: 'jsonb', default: '[]' })
+  @Column({ type: 'simple-json', default: '[]' })
   wallets: string[];
 
-  @Column({ type: 'enum', enum: BlockchainType, array: true, default: [BlockchainType.ETHEREUM] })
+  @Column({ type: 'simple-json', default: '[]' })
   chains: BlockchainType[];
 
-  @Column({  length: 100, nullable: true, type: 'varchar' })
+  @Column({ length: 100, nullable: true, type: 'varchar' })
   jurisdiction: string | null;
 
   @Column({ length: 255, default: 'manual' })
@@ -40,7 +40,7 @@ export class VASP {
   @Column({ name: 'last_updated', type: 'timestamp' })
   lastUpdated: Date;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   metadata: Record<string, unknown>;
 
   @CreateDateColumn({ name: 'created_at' })
@@ -49,3 +49,4 @@ export class VASP {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
+

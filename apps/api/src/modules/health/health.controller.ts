@@ -41,4 +41,20 @@ export class HealthController {
       services: checks,
     };
   }
+
+  @Public()
+  @Get('blockchain-providers')
+  @ApiOperation({ summary: 'Blockchain providers health check' })
+  async providers() {
+    const checks = await this.healthService.checkAll();
+    const providers = {
+      ethProvider: checks.ethProvider,
+      tronProvider: checks.tronProvider,
+    };
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      providers,
+    };
+  }
 }

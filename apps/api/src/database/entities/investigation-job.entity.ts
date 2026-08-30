@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
   ManyToOne, JoinColumn, Index,
 } from 'typeorm';
@@ -15,10 +15,10 @@ export class InvestigationJob {
   @Column({ name: 'investigation_id' })
   investigationId: string;
 
-  @Column({ type: 'enum', enum: InvestigationStage })
+  @Column({ type: 'simple-enum', enum: InvestigationStage })
   stage: InvestigationStage;
 
-  @Column({ type: 'enum', enum: ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED'], default: 'PENDING' })
+  @Column({ type: 'varchar', length: 50, default: 'PENDING' })
   status: string;
 
   @Column({ type: 'int', default: 0 })
@@ -43,3 +43,4 @@ export class InvestigationJob {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }
+

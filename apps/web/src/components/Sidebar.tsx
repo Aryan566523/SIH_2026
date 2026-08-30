@@ -2,11 +2,11 @@
 
 import { memo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, FolderSearch, Plus, Network, MapPin,
   Eye, FileWarning, Link2, Bell, List, FileText, Search,
-  Activity, Settings, Users, ChevronLeft, ChevronRight, Shield,
+  Activity, Settings, Users, ChevronLeft, ChevronRight, Shield, BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/lib/stores/ui.store';
@@ -42,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'System Health', href: '/dashboard/health', icon: Activity, group: 'System' },
   { label: 'Administration', href: '/dashboard/admin', icon: Users, roles: ADMIN_ROLES },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { label: 'Glossary', href: '/dashboard/glossary', icon: BookOpen },
 ];
 
 /** Derive a readable display name from user data or email fallback */
@@ -252,3 +253,4 @@ const SidebarComponent = memo(function Sidebar() {
 });
 
 export { SidebarComponent as Sidebar };
+

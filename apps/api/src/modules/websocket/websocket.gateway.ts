@@ -1,4 +1,4 @@
-import {
+﻿import {
   WebSocketGateway as WSGateway,
   WebSocketServer,
   SubscribeMessage,
@@ -13,7 +13,7 @@ import { WSInvestigationProgress, WSAlert, WSGraphUpdate } from '@chainsentinel/
 
 @WSGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: '*',
     credentials: true,
   },
   namespace: '/',
@@ -22,63 +22,51 @@ export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnec
   @WebSocketServer()
   server: Server;
   private readonly logger = new Logger(WebSocketGateway.name);
-  private connectedClients = new Map<string, { userId?: string; rooms: Set<string> }>();
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
-    this.connectedClients.set(client.id, { rooms: new Set() });
-
-    // Join default room
-    client.join('global');
-    this.connectedClients.get(client.id)!.rooms.add('global');
   }
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
-    this.connectedClients.delete(client.id);
   }
 
   @SubscribeMessage('join-room')
   handleJoinRoom(@ConnectedSocket() client: Socket, @MessageBody() data: { room: string }) {
-    client.join(data.room);
-    const clientInfo = this.connectedClients.get(client.id);
-    if (clientInfo) {
-      clientInfo.rooms.add(data.room);
+    if (data?.room) {
+      client.join(data.room);
+      this.logger.log(`Client ${client.id} joined room: ${data.room}`);
     }
-    this.logger.log(`Client ${client.id} joined room: ${data.room}`);
   }
 
   @SubscribeMessage('leave-room')
   handleLeaveRoom(@ConnectedSocket() client: Socket, @MessageBody() data: { room: string }) {
-    client.leave(data.room);
-    const clientInfo = this.connectedClients.get(client.id);
-    if (clientInfo) {
-      clientInfo.rooms.delete(data.room);
+    if (data?.room) {
+      client.leave(data.room);
     }
   }
 
-  // Emit investigation progress
-  emitInvestigationProgress(caseId: string, data: WSInvestigationProgress) {
-    this.server.to(`case:${caseId}`).emit('investigation:progress', data);
-    this.logger.debug(`Investigation progress emitted for case ${caseId}`);
+  emitStageUpdate(investigationId: string, data: any) {
+    this.server.to(`investigation:${investigationId}`).emit('investigation:stage-update', data);
   }
 
-  // Emit alert
-  emitAlert(organizationId: string, data: WSAlert) {
-    this.server.to(`org:${organizationId}`).emit('alert:new', data);
+  emitInvestigationAlert(investigationId: string, data: any) {
+    this.server.to(`investigation:${investigationId}`).emit('investigation:alert', data);
   }
 
-  // Emit graph update
-  emitGraphUpdate(caseId: string, data: WSGraphUpdate) {
-    this.server.to(`case:${caseId}`).emit('graph:update', data);
+  emitInvestigationCompleted(investigationId: string, data: any) {
+    this.server.to(`investigation:${investigationId}`).emit('investigation:completed', data);
   }
 
-  // Emit system event
-  emitSystemEvent(event: string, data: any) {
-    this.server.to('global').emit(`system:${event}`, data);
+  emitInvestigationFailed(investigationId: string, data: any) {
+    this.server.to(`investigation:${investigationId}`).emit('investigation:failed', data);
   }
 
-  getConnectedCount(): number {
-    return this.connectedClients.size;
+  emitGlobalAlert(data: any) {
+    this.server.to('global:alert').emit('global:alert', data);
+  }
+
+  emitGlobalActivity(data: any) {
+    this.server.to('global:activity').emit('global:activity', data);
   }
 }

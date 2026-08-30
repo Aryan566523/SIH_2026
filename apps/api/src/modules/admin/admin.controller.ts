@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
+﻿import { Controller, Get, Patch, Post, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -13,6 +13,14 @@ import { UserRole } from '@chainsentinel/types';
 @Controller('admin')
 export class AdminController {
   constructor(private adminService: AdminService) {}
+
+  @Post('users/invite')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.AGENCY_ADMIN)
+  @ApiOperation({ summary: 'Invite a new user' })
+  async inviteUser(@Body() body: { email: string, role: string }, @CurrentUser('organizationId') orgId: string) {
+    const user = await this.adminService.inviteUser(body.email, body.role, orgId);
+    return { success: true, data: user };
+  }
 
   @Get('users')
   @Roles(UserRole.SUPER_ADMIN, UserRole.AGENCY_ADMIN)
@@ -55,3 +63,4 @@ export class AdminController {
     return { success: true, data: stats };
   }
 }
+

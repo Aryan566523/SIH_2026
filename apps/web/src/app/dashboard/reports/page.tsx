@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Download, Shield, Clock, RefreshCw } from 'lucide-react';
-import { reportsApi, casesApi } from '@/lib/api';
+import { reportsApi } from '@/lib/api';
 import { useUIStore } from '@/lib/stores/ui.store';
 import { useThemeStore } from '@/lib/stores/theme.store';
 import { formatDate } from '@/lib/utils';
@@ -12,7 +12,9 @@ export default function ReportsPage() {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
   const [caseId, setCaseId] = useState('');
+  const [investigationId, setInvestigationId] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [generatingInvPdf, setGeneratingInvPdf] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,16 +27,8 @@ export default function ReportsPage() {
   const fetchReports = async () => {
     setLoading(true);
     try {
-      const cases = await casesApi.list({ limit: 50 });
-      const caseList = cases.data.data || [];
-      const allReports: any[] = [];
-      for (const c of caseList.slice(0, 10)) {
-        try {
-          const { data } = await reportsApi.getByCase(c.id);
-          if (data.data) allReports.push(...(Array.isArray(data.data) ? data.data : [data.data]));
-        } catch { /* ignore */ }
-      }
-      setReports(allReports);
+      const { data } = await reportsApi.listAll();
+      setReports(Array.isArray(data.data) ? data.data : []);
     } catch {
       setReports([]);
     } finally {
@@ -54,6 +48,27 @@ export default function ReportsPage() {
       addToast('error', 'Failed to generate report');
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleGenerateInvestigationPdf = async () => {
+    if (!investigationId) return;
+    setGeneratingInvPdf(true);
+    try {
+      const response = await reportsApi.generateInvestigationPdf(investigationId);
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Forensic_Report_${investigationId.substring(0, 8)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      addToast('success', 'Forensic PDF report downloaded successfully');
+    } catch {
+      addToast('error', 'Failed to generate investigation PDF report');
+    } finally {
+      setGeneratingInvPdf(false);
     }
   };
 
@@ -79,9 +94,9 @@ export default function ReportsPage() {
         </button>
       </div>
 
-      {/* Generate report */}
+      {/* Generate Case report */}
       <div className="glass-panel rounded-xl p-6">
-        <h3 className="text-sm font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#101318' }}>Generate Report</h3>
+        <h3 className="text-sm font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#101318' }}>Generate Case Report</h3>
         <div className="flex items-center gap-4">
           <input
             value={caseId}
@@ -92,7 +107,25 @@ export default function ReportsPage() {
           />
           <button onClick={handleGenerate} disabled={generating || !caseId} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50" style={{ background: isDark ? 'rgba(0, 240, 255, 0.15)' : 'rgba(0, 150, 180, 0.1)', border: isDark ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid rgba(0, 150, 180, 0.3)', color: isDark ? '#00f0ff' : '#0891b2' }}>
             {generating ? <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: isDark ? 'rgba(0, 240, 255, 0.3)' : 'rgba(0, 150, 180, 0.3)', borderTopColor: isDark ? '#00f0ff' : '#0891b2' }} /> : <FileText className="w-4 h-4" />}
-            Generate PDF
+            Generate Report
+          </button>
+        </div>
+      </div>
+
+      {/* Generate Investigation PDF */}
+      <div className="glass-panel rounded-xl p-6">
+        <h3 className="text-sm font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#101318' }}>Generate Investigation PDF</h3>
+        <div className="flex items-center gap-4">
+          <input
+            value={investigationId}
+            onChange={(e) => setInvestigationId(e.target.value)}
+            placeholder="Enter Investigation ID"
+            className="flex-1 px-4 py-2 rounded-lg text-sm font-mono outline-none"
+            style={{ background: isDark ? '#1a1e2f' : '#f1f5f9', border: `1px solid ${isDark ? '#2a304a' : '#e2e8f0'}`, color: isDark ? '#ffffff' : '#101318' }}
+          />
+          <button onClick={handleGenerateInvestigationPdf} disabled={generatingInvPdf || !investigationId} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50" style={{ background: isDark ? 'rgba(0, 255, 136, 0.15)' : 'rgba(0, 200, 100, 0.1)', border: isDark ? '1px solid rgba(0, 255, 136, 0.4)' : '1px solid rgba(0, 200, 100, 0.3)', color: isDark ? '#00ff88' : '#10b981' }}>
+            {generatingInvPdf ? <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: isDark ? 'rgba(0, 255, 136, 0.3)' : 'rgba(0, 200, 100, 0.3)', borderTopColor: isDark ? '#00ff88' : '#10b981' }} /> : <Download className="w-4 h-4" />}
+            Download PDF
           </button>
         </div>
       </div>
@@ -146,18 +179,51 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {reports.map((report: any) => (
-                  <tr key={report.id} className="border-b" style={{ borderColor: isDark ? 'rgba(42, 48, 74, 0.3)' : 'rgba(0,0,0,0.04)' }}>
-                    <td className="px-4 py-3" style={{ color: isDark ? '#ffffff' : '#101318' }}>{report.title}</td>
-                    <td className="px-4 py-3 font-mono text-xs" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>{report.version}</td>
-                    <td className="px-4 py-3 text-xs" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>{report.createdAt ? formatDate(report.createdAt) : '-'}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button onClick={() => handleVerify(report.id)} className="text-xs px-2 py-1 rounded transition-colors" style={{ color: isDark ? '#00f0ff' : '#0891b2' }}>
-                        <Shield className="w-3 h-3 inline mr-1" />Verify
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {reports.map((report: any) => {
+                  const invId = report.metadata?.investigationId || report.id;
+                  return (
+                    <tr key={report.id} className="border-b" style={{ borderColor: isDark ? 'rgba(42, 48, 74, 0.3)' : 'rgba(0,0,0,0.04)' }}>
+                      <td className="px-4 py-3 font-medium" style={{ color: isDark ? '#ffffff' : '#101318' }}>
+                        <div>{report.title}</div>
+                        <div className="text-[10px] font-mono mt-0.5" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
+                          Hash: {report.sha256Hash ? `${report.sha256Hash.substring(0, 16)}...` : 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>v{report.version || '1.0'}</td>
+                      <td className="px-4 py-3 text-xs" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>{report.createdAt ? formatDate(report.createdAt) : '-'}</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              const content = `CHAINSENTINEL FORENSIC REPORT\nTitle: ${report.title}\nVersion: ${report.version}\nGenerated: ${report.createdAt}\nSHA-256: ${report.sha256Hash}\n\nMETADATA:\n${JSON.stringify(report.metadata, null, 2)}`;
+                              const blob = new Blob([content], { type: 'text/plain' });
+                              const url = window.URL.createObjectURL(blob);
+                              const link = document.createElement('a');
+                              link.href = url;
+                              link.setAttribute('download', `${report.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.txt`);
+                              document.body.appendChild(link);
+                              link.click();
+                              link.remove();
+                              window.URL.revokeObjectURL(url);
+                              addToast('success', 'Report downloaded');
+                            }}
+                            className="text-xs px-2.5 py-1 rounded transition-colors flex items-center gap-1"
+                            style={{ color: isDark ? '#00ff88' : '#10b981', border: `1px solid ${isDark ? 'rgba(0, 255, 136, 0.3)' : 'rgba(0, 185, 100, 0.3)'}` }}
+                          >
+                            <Download className="w-3 h-3" /> Download
+                          </button>
+                          <button
+                            onClick={() => handleVerify(report.id)}
+                            className="text-xs px-2.5 py-1 rounded transition-colors flex items-center gap-1"
+                            style={{ color: isDark ? '#00f0ff' : '#0891b2', border: `1px solid ${isDark ? 'rgba(0, 240, 255, 0.3)' : 'rgba(0, 150, 180, 0.3)'}` }}
+                          >
+                            <Shield className="w-3 h-3" /> Verify
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

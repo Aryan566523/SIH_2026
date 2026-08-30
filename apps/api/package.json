@@ -15,6 +15,7 @@
     "test:integration": "jest --testPathPattern=integration",
     "db:migrate": "typeorm migration:run -d src/database/data-source.ts",
     "db:seed": "ts-node src/database/seed.ts",
+    "db:admin": "ts-node src/database/create-admin.ts",
     "db:reset": "ts-node src/database/reset.ts"
   },
   "dependencies": {
@@ -29,6 +30,7 @@
     "@nestjs/swagger": "^7.2.0",
     "@nestjs/typeorm": "^10.0.1",
     "@nestjs/websockets": "^10.3.0",
+    "@types/pdfkit": "^0.17.6",
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.1.0",
     "class-transformer": "^0.5.1",
@@ -37,10 +39,12 @@
     "neo4j-driver": "^5.17.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "pdfkit": "^0.20.2",
     "pg": "^8.11.3",
     "reflect-metadata": "^0.2.1",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3",
+    "sqlite3": "^6.0.1",
     "typeorm": "^0.3.19",
     "uuid": "^9.0.0"
   },

@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn,
   Index,
 } from 'typeorm';
@@ -13,22 +13,22 @@ export class Wallet {
   @Column({ length: 255 })
   address: string;
 
-  @Column({ type: 'enum', enum: BlockchainType })
+  @Column({ type: 'simple-enum', enum: BlockchainType })
   blockchain: BlockchainType;
 
-  @Column({  nullable: true, length: 255, type: 'varchar' })
+  @Column({ nullable: true, length: 255, type: 'varchar' })
   label: string | null;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0, name: 'risk_score' })
   riskScore: number;
 
-  @Column({ type: 'enum', enum: RiskLevel, default: RiskLevel.LOW, name: 'risk_level' })
+  @Column({ type: 'simple-enum', enum: RiskLevel, default: RiskLevel.LOW, name: 'risk_level' })
   riskLevel: RiskLevel;
 
-  @Column({  nullable: true, name: 'entity_label', length: 255, type: 'varchar' })
+  @Column({ nullable: true, name: 'entity_label', length: 255, type: 'varchar' })
   entityLabel: string | null;
 
-  @Column({  nullable: true, name: 'vasp_id', type: 'varchar' })
+  @Column({ nullable: true, name: 'vasp_id', type: 'varchar' })
   vaspId: string | null;
 
   @Column({ default: false, name: 'is_on_watchlist' })
@@ -46,7 +46,7 @@ export class Wallet {
   @Column({ type: 'timestamp', nullable: true, name: 'last_seen' })
   lastSeen: Date | null;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'simple-json', nullable: true })
   metadata: Record<string, unknown> | null;
 
   @CreateDateColumn({ name: 'created_at' })
@@ -55,3 +55,4 @@ export class Wallet {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
+

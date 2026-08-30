@@ -1,7 +1,9 @@
-import { NestFactory } from '@nestjs/core';
+﻿import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { DataSource } from 'typeorm';
 import { AppModule } from './app.module';
+import { runAutoSeed } from './database/auto-seed';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -71,6 +73,16 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
+
+  // Auto seed database with default credentials & admin@sih.com
+  try {
+    const dataSource = app.get(DataSource);
+    if (dataSource && dataSource.isInitialized) {
+      await runAutoSeed(dataSource);
+    }
+  } catch (err: any) {
+    logger.warn(`Auto-seed skipped: ${err.message}`);
+  }
 
   const port = process.env.API_PORT || 3001;
   await app.listen(port);

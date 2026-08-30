@@ -43,3 +43,5 @@ docker-compose.override.yml
 # Misc
 *.tgz
 .cache/
+*.sqlite
+*.sqlite-journal

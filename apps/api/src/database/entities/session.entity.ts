@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
   ManyToOne, JoinColumn, Index,
 } from 'typeorm';
@@ -20,10 +20,10 @@ export class Session {
   @Column({ type: 'timestamp', name: 'expires_at' })
   expiresAt: Date;
 
-  @Column({  nullable: true, name: 'user_agent', type: 'varchar' })
+  @Column({ nullable: true, name: 'user_agent', type: 'varchar' })
   userAgent: string | null;
 
-  @Column({  nullable: true, name: 'ip_address', type: 'varchar' })
+  @Column({ nullable: true, name: 'ip_address', type: 'varchar' })
   ipAddress: string | null;
 
   @Column({ default: true, name: 'is_active' })
@@ -36,3 +36,4 @@ export class Session {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }
+

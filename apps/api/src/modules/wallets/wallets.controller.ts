@@ -13,8 +13,13 @@ export class WalletsController {
   @Get('search')
   @ApiOperation({ summary: 'Search wallets' })
   async search(@Query('q') query: string, @Query('limit') limit?: number) {
-    const wallets = await this.walletsService.search(query, limit);
-    return { success: true, data: wallets };
+    try {
+      const wallets = await this.walletsService.search(query, limit);
+      return { success: true, data: wallets };
+    } catch (e: any) {
+      console.error('Wallets search error:', e);
+      return { success: false, error: e.message, data: [] };
+    }
   }
 
   @Get(':address')

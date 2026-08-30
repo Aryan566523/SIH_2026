@@ -8,7 +8,8 @@ import {
   FolderSearch, AlertTriangle, Eye, MapPin, DollarSign, Link2,
   TrendingUp, Shield, ArrowUpRight, ArrowDownRight, Activity,
 } from 'lucide-react';
-import { casesApi, investigationsApi, alertsApi, watchlistApi, vaspApi, walletsApi } from '@/lib/api';
+import { casesApi, investigationsApi, alertsApi, watchlistApi, vaspApi, walletsApi, dashboardApi } from '@/lib/api';
+import { socketService } from '@/lib/socket';
 import { cn, formatNumber, formatAmount, timeAgo, getSeverityColor } from '@/lib/utils';
 import { useThemeStore } from '@/lib/stores/theme.store';
 
@@ -96,70 +97,58 @@ export default function CommandCenter() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [caseStats, invStats, alertStats, watchlist, vaspStats, alertList, walletSearch] = await Promise.allSettled([
-        casesApi.getStats(),
-        investigationsApi.getStats(),
-        alertsApi.getStats(),
-        watchlistApi.list({ limit: 1 }),
-        vaspApi.getStats(),
+      const [statsRes, activityRes, riskRes, chainRes, alertsRes] = await Promise.allSettled([
+        dashboardApi.getStats(),
+        dashboardApi.getActivity(50),
+        dashboardApi.getRiskDistribution(),
+        dashboardApi.getVolumeByChain(),
         alertsApi.list({ limit: 10 }),
-        walletsApi.search(''),
       ]);
 
-      const cs = caseStats.status === 'fulfilled' ? caseStats.value.data.data : {};
-      const is = invStats.status === 'fulfilled' ? invStats.value.data.data : {};
-      const as = alertStats.status === 'fulfilled' ? alertStats.value.data.data : {};
-      const wl = watchlist.status === 'fulfilled' ? watchlist.value.data : {};
-      const vs = vaspStats.status === 'fulfilled' ? vaspStats.value.data.data : {};
-      const alerts = alertList.status === 'fulfilled' ? (alertList.value.data.data || alertList.value.data || []) : [];
-      const wallets = walletSearch.status === 'fulfilled' ? (walletSearch.value.data.data || []) : [];
+      const s = statsRes.status === 'fulfilled' ? statsRes.value.data.data : {};
+      const activity = activityRes.status === 'fulfilled' ? activityRes.value.data.data : [];
+      const riskDist = riskRes.status === 'fulfilled' ? riskRes.value.data.data : [];
+      const chainDist = chainRes.status === 'fulfilled' ? chainRes.value.data.data : [];
+      const alerts = alertsRes.status === 'fulfilled' ? (alertsRes.value.data.data || alertsRes.value.data || []) : [];
 
       setStats({
-        cases: cs.total || cs.totalCases || 0,
-        investigations: is.total || is.totalInvestigations || 0,
-        alerts: as.unread || as.total || 0,
-        wallets: wallets.length,
-        vasps: vs.total || 0,
-        watchlist: wl.meta?.total || wl.total || 0,
+        cases: s.cases || 0,
+        investigations: s.activeInvestigations || 0,
+        alerts: s.criticalAlerts || 0,
+        wallets: s.suspectWallets || 0,
+        vasps: s.vaspMatches || 0,
+        watchlist: s.watchlistedWallets || 0,
       });
 
-      // Build feed from real alerts
-      const feedItems: FeedItem[] = alerts.map((a: any) => ({
+      // Build feed from activity
+      const feedItems: FeedItem[] = activity.map((a: any) => ({
         id: a.id,
         time: a.createdAt ? timeAgo(a.createdAt) : '',
-        message: a.title || a.message || 'Alert',
-        type: a.severity === 'CRITICAL' || a.severity === 'HIGH' ? 'alert' : a.type === 'vasp_match' ? 'match' : 'info' as any,
-        href: '/dashboard/alerts',
+        message: a.action || a.message || 'Activity',
+        type: a.type || 'info',
+        href: '#',
       }));
       setFeed(feedItems);
       setRecentAlerts(alerts);
 
-      // Build risk distribution from wallet search results
-      const riskBuckets = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
-      wallets.forEach((w: any) => {
-        const level = (w.riskLevel || 'LOW').toUpperCase();
-        if (riskBuckets[level as keyof typeof riskBuckets] !== undefined) riskBuckets[level as keyof typeof riskBuckets]++;
-        else riskBuckets.LOW++;
-      });
-      const total = Object.values(riskBuckets).reduce((a, b) => a + b, 0) || 1;
-      setRiskData([
-        { label: 'Critical', count: riskBuckets.CRITICAL, pct: Math.round((riskBuckets.CRITICAL / total) * 100), color: 'bg-red-500' },
-        { label: 'High', count: riskBuckets.HIGH, pct: Math.round((riskBuckets.HIGH / total) * 100), color: 'bg-orange-500' },
-        { label: 'Medium', count: riskBuckets.MEDIUM, pct: Math.round((riskBuckets.MEDIUM / total) * 100), color: 'bg-amber-400' },
-        { label: 'Low', count: riskBuckets.LOW, pct: Math.round((riskBuckets.LOW / total) * 100), color: 'bg-green-500' },
-      ]);
+      // Build risk distribution from API
+      const riskTotal = riskDist.reduce((a: any, b: any) => a + b.count, 0) || 1;
+      const riskColors: any = { Critical: 'bg-red-500', High: 'bg-orange-500', Medium: 'bg-amber-400', Low: 'bg-green-500' };
+      setRiskData(riskDist.map((r: any) => ({
+        label: r.level,
+        count: r.count,
+        pct: Math.round((r.count / riskTotal) * 100),
+        color: riskColors[r.level] || 'bg-gray-500',
+      })));
 
-      // Blockchain distribution from wallets
-      const chainCounts: Record<string, number> = {};
-      wallets.forEach((w: any) => { const c = w.blockchain || 'UNKNOWN'; chainCounts[c] = (chainCounts[c] || 0) + 1; });
-      const chainColors: Record<string, string> = { ETHEREUM: '#627EEA', BITCOIN: '#F7931A', TRON: '#FF0013', POLYGON: '#8247E5', BNB_CHAIN: '#F3BA2F', SOLANA: '#9945FF', UNKNOWN: '#64748b' };
-      const sortedChains = Object.entries(chainCounts).sort(([, a], [, b]) => b - a).slice(0, 5);
-      const chainTotal = sortedChains.reduce((sum, [, c]) => sum + c, 0) || 1;
-      setChainData(sortedChains.map(([name, count]) => ({
-        name: name.replace(/_/g, ' '),
-        count,
-        pct: Math.round((count / chainTotal) * 100),
-        color: chainColors[name] || '#64748b',
+      // Blockchain distribution from API
+      const chainTotal = chainDist.reduce((sum: any, b: any) => sum + b.volume, 0) || 1;
+      const chainColors: Record<string, string> = { Ethereum: '#627EEA', Bitcoin: '#F7931A', TRON: '#FF0013', Polygon: '#8247E5', BNB_CHAIN: '#F3BA2F', Solana: '#9945FF' };
+      setChainData(chainDist.map((b: any) => ({
+        name: b.name,
+        count: b.volume,
+        pct: Math.round((b.volume / chainTotal) * 100),
+        color: chainColors[b.name] || '#64748b',
       })));
 
     } catch {

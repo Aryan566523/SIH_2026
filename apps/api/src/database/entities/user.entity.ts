@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn,
   ManyToOne, JoinColumn, OneToMany, Index,
 } from 'typeorm';
@@ -25,7 +25,7 @@ export class User {
   @Column({ select: false })
   passwordHash: string;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.INVESTIGATOR })
+  @Column({ type: 'simple-enum', enum: UserRole, default: UserRole.INVESTIGATOR })
   role: UserRole;
 
   @Column({ name: 'organization_id' })
@@ -59,3 +59,4 @@ export class User {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
+

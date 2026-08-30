@@ -11,6 +11,7 @@ import {
 import { investigationsApi } from '@/lib/api';
 import { cn, formatDate, formatDateTime, getRiskColor } from '@/lib/utils';
 import { useThemeStore } from '@/lib/stores/theme.store';
+import { useUIStore } from '@/lib/stores/ui.store';
 
 const STAGE_LABELS: Record<string, string> = {
   INVESTIGATION_REQUESTED: 'Investigation requested',
@@ -39,6 +40,53 @@ export default function InvestigationDetailPage({ params }: { params: { id: stri
   const [loading, setLoading] = useState(true);
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
+  const addToast = useUIStore((s) => s.addToast);
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [generatingNotice, setGeneratingNotice] = useState(false);
+
+  const handleGenerateReport = async () => {
+    setGeneratingReport(true);
+    try {
+      const response = await investigationsApi.generateReportPdf(id);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Forensic_Report_${id.substring(0, 8)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      addToast('success', 'Forensic PDF report downloaded successfully');
+    } catch (e) {
+      console.error(e);
+      addToast('error', 'Failed to download forensic report');
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
+
+  const handleGenerateNotice = async () => {
+    setGeneratingNotice(true);
+    try {
+      const response = await investigationsApi.generateNotice(id);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Section_91_CrPC_Notice_${id.substring(0, 8)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      addToast('success', 'Section 91 CrPC Notice PDF downloaded');
+    } catch (e) {
+      console.error(e);
+      addToast('error', 'Failed to generate Section 91 notice');
+    } finally {
+      setGeneratingNotice(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -296,6 +344,43 @@ export default function InvestigationDetailPage({ params }: { params: { id: stri
               </div>
             ))}
           </div>
+        </motion.div>
+      )}
+      {/* Actions */}
+      {investigation.status === 'COMPLETED' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="flex flex-wrap gap-4"
+        >
+          <button
+            onClick={handleGenerateReport}
+            disabled={generatingReport}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all"
+            style={{
+              background: isDark ? 'rgba(0, 240, 255, 0.15)' : 'rgba(0, 150, 180, 0.1)',
+              border: isDark ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid rgba(0, 150, 180, 0.3)',
+              color: isDark ? '#00f0ff' : '#0891b2'
+            }}
+          >
+            {generatingReport ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
+            Generate Report PDF
+          </button>
+          
+          <button
+            onClick={handleGenerateNotice}
+            disabled={generatingNotice}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all"
+            style={{
+              background: isDark ? 'rgba(255, 170, 0, 0.15)' : 'rgba(200, 120, 0, 0.1)',
+              border: isDark ? '1px solid rgba(255, 170, 0, 0.4)' : '1px solid rgba(200, 120, 0, 0.3)',
+              color: isDark ? '#ffaa00' : '#b37700'
+            }}
+          >
+            {generatingNotice ? <Loader2 className="w-5 h-5 animate-spin" /> : <Shield className="w-5 h-5" />}
+            Generate Section 91 Notice
+          </button>
         </motion.div>
       )}
     </div>

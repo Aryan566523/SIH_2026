@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
   ManyToOne, JoinColumn, Index,
 } from 'typeorm';
@@ -17,13 +17,13 @@ export class Complaint {
   @Column({ name: 'complaint_number', length: 50 })
   complaintNumber: string;
 
-  @Column({  name: 'victim_reference', nullable: true, length: 255, type: 'varchar' })
+  @Column({ name: 'victim_reference', nullable: true, length: 255, type: 'varchar' })
   victimReference: string | null;
 
   @Column({ name: 'suspect_wallet_address', length: 255 })
   suspectWalletAddress: string;
 
-  @Column({ type: 'enum', enum: BlockchainType, default: BlockchainType.UNKNOWN })
+  @Column({ type: 'simple-enum', enum: BlockchainType, default: BlockchainType.UNKNOWN })
   blockchain: BlockchainType;
 
   @Column({ length: 20, default: 'USDT' })
@@ -32,7 +32,7 @@ export class Complaint {
   @Column({ name: 'estimated_fraud_amount', type: 'decimal', precision: 20, scale: 8, nullable: true })
   estimatedFraudAmount: string | null;
 
-  @Column({ name: 'reported_timestamp', type: 'timestamp' })
+  @Column({ type: 'timestamp', name: 'reported_timestamp' })
   reportedTimestamp: Date;
 
   @Column({ type: 'text', nullable: true })
@@ -45,3 +45,4 @@ export class Complaint {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }
+

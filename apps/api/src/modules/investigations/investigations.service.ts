@@ -137,8 +137,9 @@ export class InvestigationsService {
 
     const [investigations, total] = await this.invRepo
       .createQueryBuilder('i')
-      .innerJoinAndSelect('i.case', 'c', 'c.organization_id = :organizationId', { organizationId })
-      .orderBy('i.created_at', 'DESC')
+      .innerJoinAndSelect('i.case', 'c')
+      .where('c.organizationId = :organizationId', { organizationId })
+      .orderBy('i.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
@@ -151,7 +152,8 @@ export class InvestigationsService {
 
   async getStats(organizationId: string) {
     const qb = this.invRepo.createQueryBuilder('i')
-      .innerJoin('i.case', 'c', 'c.organization_id = :organizationId', { organizationId });
+      .innerJoin('i.case', 'c')
+      .where('c.organizationId = :organizationId', { organizationId });
 
     const total = await qb.getCount();
     const running = await qb.clone().andWhere('i.status = :status', { status: InvestigationStatus.RUNNING }).getCount();

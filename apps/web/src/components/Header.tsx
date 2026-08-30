@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Bell, ChevronDown, LogOut, User, Settings, X } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth.store';
 import { useThemeStore } from '@/lib/stores/theme.store';
+import { useUIStore } from '@/lib/stores/ui.store';
 import { alertsApi, searchApi } from '@/lib/api';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { timeAgo } from '@/lib/utils';
@@ -68,6 +69,8 @@ export const Header = memo(function Header() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { theme } = useThemeStore();
+  const isDemoMode = useUIStore(s => s.isDemoMode);
+  const toggleDemoMode = useUIStore(s => s.toggleDemoMode);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -168,13 +171,19 @@ export const Header = memo(function Header() {
   }, [router]);
 
   const notifTypeIcon = (severity: string) => {
-    switch (severity) {
-      case 'CRITICAL': return '🔴';
-      case 'HIGH': return '🟠';
-      case 'MEDIUM': return '🟡';
-      case 'LOW': return '🔵';
-      default: return '⚪';
-    }
+    const colors: Record<string, string> = {
+      CRITICAL: '#ef4444',
+      HIGH:     '#f97316',
+      MEDIUM:   '#eab308',
+      LOW:      '#3b82f6',
+    };
+    const color = colors[severity] || '#64748b';
+    return (
+      <span style={{
+        display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+        background: color, flexShrink: 0, marginTop: 4,
+      }} />
+    );
   };
 
   return (
@@ -210,7 +219,7 @@ export const Header = memo(function Header() {
               border: `1px solid ${isDark ? 'rgba(58, 66, 101, 0.5)' : 'rgba(0, 0, 0, 0.06)'}`,
             }}
           >
-            ⌘K
+            Ctrl K
           </kbd>
         </div>
         <AnimatePresence>
@@ -264,6 +273,13 @@ export const Header = memo(function Header() {
 
       {/* Right side */}
       <div className="flex items-center gap-3 ml-6">
+        <button 
+          onClick={() => toggleDemoMode()}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all ${isDemoMode ? 'bg-amber-500/10 text-amber-500 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:text-white'}`}
+          title="Toggle Mock/Demo Data Fallback"
+        >
+          {isDemoMode ? 'DEMO DATA ON' : 'REAL DATA ONLY'}
+        </button>
         <ThemeToggle size="sm" />
 
         {/* Notifications */}

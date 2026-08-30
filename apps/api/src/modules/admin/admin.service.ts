@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+﻿import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../database/entities/user.entity';
@@ -12,6 +12,18 @@ export class AdminService {
     @InjectRepository(User) private usersRepo: Repository<User>,
     @InjectRepository(Organization) private orgRepo: Repository<Organization>,
   ) {}
+
+  async inviteUser(email: string, role: string, organizationId: string) {
+    const user = this.usersRepo.create({
+      email,
+      role: role as any,
+      organizationId,
+      firstName: 'Invited',
+      lastName: 'User',
+      passwordHash: 'pending',
+    });
+    return this.usersRepo.save(user);
+  }
 
   async getUsers(organizationId: string) {
     return this.usersRepo.find({ where: { organizationId }, order: { createdAt: 'DESC' } });
@@ -40,3 +52,4 @@ export class AdminService {
     return { userCount, orgCount };
   }
 }
+

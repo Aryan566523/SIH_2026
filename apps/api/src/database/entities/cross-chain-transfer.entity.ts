@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index,
 } from 'typeorm';
 import { BlockchainType } from '@chainsentinel/types';
@@ -12,7 +12,7 @@ export class CrossChainTransfer {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'enum', enum: BlockchainType, name: 'source_chain' })
+  @Column({ type: 'simple-enum', enum: BlockchainType, name: 'source_chain' })
   sourceChain: BlockchainType;
 
   @Column({ name: 'source_wallet', length: 255 })
@@ -27,13 +27,13 @@ export class CrossChainTransfer {
   @Column({ length: 255 })
   bridge: string;
 
-  @Column({ type: 'enum', enum: BlockchainType, name: 'destination_chain' })
+  @Column({ type: 'simple-enum', enum: BlockchainType, name: 'destination_chain' })
   destinationChain: BlockchainType;
 
-  @Column({  name: 'destination_transaction', length: 255, nullable: true, type: 'varchar' })
+  @Column({ name: 'destination_transaction', length: 255, nullable: true, type: 'varchar' })
   destinationTransaction: string | null;
 
-  @Column({  name: 'destination_wallet', length: 255, nullable: true, type: 'varchar' })
+  @Column({ name: 'destination_wallet', length: 255, nullable: true, type: 'varchar' })
   destinationWallet: string | null;
 
   @Column({ name: 'destination_asset', length: 20 })
@@ -51,3 +51,4 @@ export class CrossChainTransfer {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }
+

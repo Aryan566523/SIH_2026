@@ -1,4 +1,4 @@
-import {
+﻿import {
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany,
 } from 'typeorm';
 import { User } from './user.entity';
@@ -18,7 +18,7 @@ export class Organization {
   @Column({ default: true, name: 'is_active' })
   isActive: boolean;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   settings: Record<string, unknown>;
 
   @OneToMany(() => User, (user) => user.organization)
@@ -33,3 +33,4 @@ export class Organization {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
+

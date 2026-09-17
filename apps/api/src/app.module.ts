@@ -27,6 +27,9 @@ import { RiskModule } from './modules/risk/risk.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { FraudCampaignsModule } from './modules/fraud-campaigns/fraud-campaigns.module';
 import { CrossChainTransfersModule } from './modules/cross-chain-transfers/cross-chain-transfers.module';
+import { EvidenceModule } from './modules/evidence/evidence.module';
+import { VerificationModule } from './modules/verification/verification.module';
+import { TracingModule } from './modules/tracing/tracing.module';
 
 @Module({
   imports: [
@@ -104,6 +107,9 @@ import { CrossChainTransfersModule } from './modules/cross-chain-transfers/cross
     AuditModule,
     FraudCampaignsModule,
     CrossChainTransfersModule,
+    EvidenceModule,
+    VerificationModule,
+    TracingModule,
   ],
 })
 export class AppModule {}

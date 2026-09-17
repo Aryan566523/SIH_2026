@@ -4,9 +4,10 @@ import { CasesController } from './cases.controller';
 import { CasesService } from './cases.service';
 import { Case } from '../../database/entities/case.entity';
 import { Complaint } from '../../database/entities/complaint.entity';
+import { NormalizedTransaction } from '../../database/entities/normalized-transaction.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Case, Complaint])],
+  imports: [TypeOrmModule.forFeature([Case, Complaint, NormalizedTransaction])],
   controllers: [CasesController],
   providers: [CasesService],
   exports: [CasesService],

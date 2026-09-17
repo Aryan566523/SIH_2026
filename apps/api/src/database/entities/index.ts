@@ -16,6 +16,7 @@ export { AuditLog } from './audit-log.entity';
 export { CrossChainTransfer } from './cross-chain-transfer.entity';
 export { Report } from './report.entity';
 export { WalletCluster } from './wallet-cluster.entity';
+export { EvidenceRecord } from './evidence-record.entity';
 
 export * from './blockchain-api-config.entity';
 export * from './blockchain-fallback-config.entity';

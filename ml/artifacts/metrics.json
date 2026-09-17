@@ -1,0 +1,23 @@
+{
+  "model_version": "xgb-wallet-v1",
+  "model_sha256": "abde6b9fd35714a3261ef10976a4eed33606aaee8e6bdaa219e9623671fd9084",
+  "gates": {
+    "roc_auc": 0.85,
+    "f1": 0.7,
+    "precision": 0.7,
+    "recall": 0.7,
+    "false_positive_rate": 0.15,
+    "ece": 0.1
+  },
+  "gate_passed": true,
+  "test": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "roc_auc": 1.0,
+    "false_positive_rate": 0.0,
+    "ece": 0.0018,
+    "n": 597,
+    "positive_rate": 0.3417
+  }
+}

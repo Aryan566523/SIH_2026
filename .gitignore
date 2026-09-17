@@ -45,3 +45,10 @@ docker-compose.override.yml
 .cache/
 *.sqlite
 *.sqlite-journal
+
+# ML pipeline (Python)
+ml/data/
+ml/__pycache__/
+ml/.pytest_cache/
+ml/**/__pycache__/
+*.pyc

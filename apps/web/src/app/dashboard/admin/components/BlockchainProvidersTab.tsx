@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -215,7 +215,7 @@ export function BlockchainProvidersTab() {
                             primaryProviderName: 'TronGrid',
                             nativeToken: 'TRX', 
                             primaryEndpointUrl: 'https://api.trongrid.io/v1/accounts/{ADDRESS}/transactions',
-                            apiKey: '',
+                            apiKey: 'a20c9225-33d8-4bab-a7e5-f01664db040e',
                             dataModel: 'ACCOUNT', 
                             addressRegex: '^T[a-zA-Z1-9]{33}$', 
                             checksumType: 'Base58Check' 
@@ -223,7 +223,7 @@ export function BlockchainProvidersTab() {
                         },
                         { 
                           label: 'Etherscan', 
-                          desc: 'Ethereum network transactions via Etherscan',
+                          desc: 'Ethereum network transactions via Etherscan V2',
                           data: { 
                             chain: 'ETHEREUM', 
                             name: 'Ethereum', 
@@ -231,7 +231,7 @@ export function BlockchainProvidersTab() {
                             primaryProviderName: 'Etherscan',
                             nativeToken: 'ETH', 
                             primaryEndpointUrl: 'https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address={ADDRESS}&startblock=0&endblock=99999999&page=1&offset=100&sort=desc&apikey={API_KEY}',
-                            apiKey: '',
+                            apiKey: 'FZRYRUQ3CS59SREXG3G6F9HCY5DNWMYZPY',
                             dataModel: 'ACCOUNT', 
                             addressRegex: '^0x[a-fA-F0-9]{40}$', 
                             checksumType: 'EIP-55' 
@@ -239,15 +239,15 @@ export function BlockchainProvidersTab() {
                         },
                         { 
                           label: 'Chainabuse', 
-                          desc: 'Multi-chain intelligence and reports',
+                          desc: 'Multi-chain intelligence and threat reports',
                           data: { 
                             chain: 'UNKNOWN', 
-                            name: 'Multi-chain', 
+                            name: 'Multi-chain Threat Intel', 
                             chainId: '', 
                             primaryProviderName: 'Chainabuse',
                             nativeToken: '', 
                             primaryEndpointUrl: 'https://api.chainabuse.com/v0/reports?address={ADDRESS}',
-                            apiKey: '',
+                            apiKey: 'ca_QlI1djRYTU14eEh6Y3J2M0w4cVczQzZ6LjUrTjVPNkFGcVdhelpiTXlZZ2dsT3c9PQ',
                             dataModel: 'ACCOUNT', 
                             addressRegex: '.*', 
                             checksumType: 'None' 

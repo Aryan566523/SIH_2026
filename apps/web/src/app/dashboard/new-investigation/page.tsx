@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, ArrowLeft, Shield, Wallet, FileText, Search, Zap,
-  CheckCircle, Loader2,
+  CheckCircle, Loader2, SearchCheck, HelpCircle, Sparkles, ExternalLink,
 } from 'lucide-react';
-import { casesApi, investigationsApi } from '@/lib/api';
+import { casesApi, investigationsApi, walletsApi } from '@/lib/api';
 import { useUIStore } from '@/lib/stores/ui.store';
 import { useThemeStore } from '@/lib/stores/theme.store';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,7 @@ const FRAUD_TYPE_LABELS: Record<string, string> = Object.values(FraudType).reduc
 
 const STEPS = [
   { title: 'Case Details', icon: FileText },
-  { title: 'Suspect Wallet', icon: Wallet },
+  { title: 'Suspect / Target Wallet', icon: Wallet },
   { title: 'Analysis Config', icon: Search },
   { title: 'Launch', icon: Zap },
 ];
@@ -35,6 +35,12 @@ export default function NewInvestigation() {
   const [step, setStep] = useState(0);
   const [isLaunching, setIsLaunching] = useState(false);
 
+  // Complainant Outflow / Target Resolver State
+  const [complainantWallet, setComplainantWallet] = useState('');
+  const [isResolvingTarget, setIsResolvingTarget] = useState(false);
+  const [resolvedRecipients, setResolvedRecipients] = useState<any[]>([]);
+  const [autoHops, setAutoHops] = useState(true);
+
   const [form, setForm] = useState({
     title: '',
     fraudType: 'INVESTMENT_SCAM',
@@ -44,9 +50,84 @@ export default function NewInvestigation() {
     cryptocurrency: 'USDT',
     estimatedAmount: '',
     victimReference: '',
+    maxHops: '5',
   });
 
   const update = (field: string, value: string) => setForm((f) => ({ ...f, [field]: value }));
+
+  const resolveTargetFromComplainant = async () => {
+    const trimmed = complainantWallet.trim();
+    if (!trimmed) {
+      addToast('Please enter a complainant/victim wallet address first', 'error' as any);
+      return;
+    }
+
+    // Validate address format before hitting the API
+    const isEVM = /^0x[a-fA-F0-9]{40}$/.test(trimmed);
+    const isTRON = /^T[a-zA-Z0-9]{33}$/.test(trimmed);
+    const isBTC = /^(1|3|bc1)[a-km-zA-HJ-NP-Z0-9]{20,}/i.test(trimmed);
+    if (!isEVM && !isTRON && !isBTC) {
+      addToast('Invalid wallet address format. Please enter a valid Ethereum (0x...), TRON (T...), or Bitcoin address.', 'error' as any);
+      return;
+    }
+
+    setIsResolvingTarget(true);
+    setResolvedRecipients([]);
+    try {
+      const res = await walletsApi.getTransactions(trimmed, { page: 1, limit: 50 });
+      const txs: any[] = res.data.data || [];
+
+      if (txs.length === 0) {
+        addToast(
+          'No transaction history found for this wallet. The address may be new, or transactions may not yet be indexed. You can enter the suspect address manually.',
+          'warning' as any,
+        );
+        return;
+      }
+
+      // Find outgoing transactions — filter out self-transfers and empty recipients
+      const outflows = txs.filter((t: any) => {
+        const fromMatch = (t.from || '').toLowerCase() === trimmed.toLowerCase();
+        const hasDest = t.to && t.to.toLowerCase() !== trimmed.toLowerCase();
+        return fromMatch && hasDest;
+      });
+
+      if (outflows.length === 0) {
+        addToast(
+          'This wallet has no outgoing transfers. It may be a receive-only address. Please check if this is the victim\'s sending wallet and try again.',
+          'warning' as any,
+        );
+        return;
+      }
+
+      // Sort by amount descending (largest transfers = most likely fraud destination)
+      const ranked = [...outflows].sort((a: any, b: any) => {
+        const amtA = parseFloat(a.amountNormalized || '0') || 0;
+        const amtB = parseFloat(b.amountNormalized || '0') || 0;
+        return amtB - amtA;
+      });
+
+      setResolvedRecipients(ranked.slice(0, 8));
+      const topTx = ranked[0];
+      setForm((prev) => ({
+        ...prev,
+        suspectWallet: topTx.to,
+        cryptocurrency: topTx.asset || prev.cryptocurrency,
+        estimatedAmount: topTx.amountNormalized ? String(parseFloat(topTx.amountNormalized)) : prev.estimatedAmount,
+        victimReference: prev.victimReference || `Victim wallet: ${trimmed.substring(0, 10)}...`,
+      }));
+      addToast(
+        `Found ${outflows.length} outgoing transactions. Auto-selected largest transfer: ${parseFloat(topTx.amountNormalized || '0').toFixed(4)} ${topTx.asset || ''} → ${topTx.to.substring(0, 10)}...`,
+        'success' as any,
+      );
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || 'Unknown error';
+      addToast(`Failed to scan victim transactions: ${msg}. You can enter the suspect address manually.`, 'error' as any);
+    } finally {
+      setIsResolvingTarget(false);
+    }
+  };
+
 
   const handleSubmit = async () => {
     setIsLaunching(true);
@@ -178,19 +259,93 @@ export default function NewInvestigation() {
           )}
 
           {step === 1 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#101318' }}>Suspect Wallet</h2>
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm mb-1.5" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Wallet Address *</label>
+                <h2 className="text-lg font-semibold" style={{ color: isDark ? '#ffffff' : '#101318' }}>Suspect or Target Wallet</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Specify the destination fraud wallet to trace, or auto-detect it from the victim's wallet outflow</p>
+              </div>
+
+              {/* Complainant Outflow Auto-Resolver Box */}
+              <div className="p-4 rounded-xl border border-neon-cyan/30 bg-neon-cyan/5 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-neon-cyan shrink-0" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-neon-cyan">
+                      Don't have the scammer address? Auto-Detect from Complainant Wallet
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30">
+                    Smart Resolver
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300">
+                  If the victim/complainant only knows their own wallet, paste their address below. The system will trace recent outward transactions and automatically select the fraud destination wallet:
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    value={complainantWallet}
+                    onChange={(e) => setComplainantWallet(e.target.value)}
+                    placeholder="Enter complainant's wallet address (e.g., 0x... or T...)"
+                    className="flex-1 px-3 py-2 rounded-lg text-xs font-mono outline-none"
+                    style={inputStyle}
+                  />
+                  <button
+                    type="button"
+                    onClick={resolveTargetFromComplainant}
+                    disabled={isResolvingTarget || !complainantWallet.trim()}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-neon-cyan text-slate-950 hover:bg-neon-cyan/90 transition-all disabled:opacity-50"
+                  >
+                    {isResolvingTarget ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <SearchCheck className="w-3.5 h-3.5" />}
+                    {isResolvingTarget ? 'Scanning...' : 'Find Destination'}
+                  </button>
+                </div>
+
+                {resolvedRecipients.length > 0 && (
+                  <div className="mt-2 space-y-1.5 pt-2 border-t border-neon-cyan/20">
+                    <p className="text-[11px] font-semibold text-slate-300">Discovered Recent Outgoing Recipients:</p>
+                    <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
+                      {resolvedRecipients.map((tx: any, idx: number) => (
+                        <div
+                          key={tx.id || tx.txHash || idx}
+                          onClick={() => {
+                            setForm((prev) => ({
+                              ...prev,
+                              suspectWallet: tx.to,
+                              cryptocurrency: tx.asset || prev.cryptocurrency,
+                              estimatedAmount: tx.amountNormalized ? String(parseFloat(tx.amountNormalized)) : prev.estimatedAmount,
+                            }));
+                            addToast(`Selected target wallet: ${tx.to}`, 'info' as any);
+                          }}
+                          className={cn(
+                            'p-2 rounded-lg border text-xs flex items-center justify-between cursor-pointer transition-colors font-mono',
+                            form.suspectWallet.toLowerCase() === (tx.to || '').toLowerCase()
+                              ? 'bg-neon-cyan/20 border-neon-cyan text-white'
+                              : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                          )}
+                        >
+                          <span className="truncate max-w-[200px]">{tx.to}</span>
+                          <span className="font-bold text-neon-cyan shrink-0">
+                            {tx.amountNormalized || '0'} {tx.asset || 'ETH'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm mb-1.5" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Target Suspect Wallet Address *</label>
                 <input
                   value={form.suspectWallet}
                   onChange={(e) => update('suspectWallet', e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg text-sm font-mono outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-lg text-sm font-mono outline-none transition-all font-semibold"
                   style={inputStyle}
                   placeholder="0x... or T... or 1..."
                 />
-                <p className="text-xs mt-1" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Blockchain will be auto-detected from address format</p>
+                <p className="text-xs mt-1" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Blockchain network will be auto-detected from address format</p>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm mb-1.5" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Cryptocurrency</label>
@@ -206,7 +361,7 @@ export default function NewInvestigation() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm mb-1.5" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Estimated Amount</label>
+                  <label className="block text-sm mb-1.5" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Estimated Fraud Amount</label>
                   <input
                     value={form.estimatedAmount}
                     onChange={(e) => update('estimatedAmount', e.target.value)}
@@ -220,24 +375,79 @@ export default function NewInvestigation() {
           )}
 
           {step === 2 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#101318' }}>Analysis Configuration</h2>
+            <div className="space-y-5">
+              <h2 className="text-lg font-semibold" style={{ color: isDark ? '#ffffff' : '#101318' }}>Analysis Configuration</h2>
+
+              {/* Auto Hops dynamic mode toggle */}
+              <div
+                onClick={() => setAutoHops(!autoHops)}
+                className={cn(
+                  'p-4 rounded-xl border cursor-pointer transition-all flex items-start justify-between gap-3',
+                  autoHops ? 'bg-neon-cyan/10 border-neon-cyan/50' : 'bg-slate-900/40 border-slate-800'
+                )}
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-neon-cyan">
+                      Auto-Hops Mode (Smart Terminal Boundary Stopping)
+                    </h3>
+                    <span className={cn('text-[10px] font-mono px-2 py-0.5 rounded font-bold', autoHops ? 'bg-neon-cyan text-slate-950' : 'bg-slate-800 text-slate-400')}>
+                      {autoHops ? 'ENABLED' : 'MANUAL DEPTH'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1">
+                    When enabled, the pipeline automatically traces forward until it discovers a regulated exchange / VASP deposit address (such as Binance, OKX, WazirX) or an anonymizing mixer, terminating the path at the optimal legal boundary for Section 91 notices.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoHops}
+                  onChange={(e) => setAutoHops(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded accent-cyan-400"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm mb-1.5" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Max Tracing Depth</label>
-                  <select className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all" style={inputStyle}>
-                    <option value="5">5 hops</option>
-                    <option value="10" selected>10 hops</option>
-                    <option value="20">20 hops</option>
-                  </select>
+                  <label className="block text-sm mb-1.5" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>
+                    {autoHops ? 'Maximum Trace Bound (Safety Cap)' : 'Fixed Tracing Depth (Hops)'}
+                  </label>
+                  <div className="flex gap-2">
+                    <select
+                      value={form.maxHops}
+                      onChange={(e) => update('maxHops', e.target.value)}
+                      className="flex-1 px-4 py-3 rounded-lg text-sm outline-none transition-all"
+                      style={inputStyle}
+                    >
+                      <option value="3">3 hops (Fast)</option>
+                      <option value="5">5 hops (Standard)</option>
+                      <option value="10">10 hops (Deep Forensic)</option>
+                      <option value="25">25 hops (Extended Syndicate)</option>
+                      <option value="50">50 hops (Maximum Comprehensive)</option>
+                    </select>
+                    <input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={form.maxHops}
+                      onChange={(e) => update('maxHops', e.target.value)}
+                      className="w-20 px-3 py-3 rounded-lg text-sm font-mono font-bold text-center outline-none"
+                      style={inputStyle}
+                      title="Custom Hops Number (1-50)"
+                      placeholder="Custom"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1 font-mono">Select preset or enter custom number of hops (1-50)</p>
                 </div>
                 <div>
                   <label className="block text-sm mb-1.5" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Min Amount Filter</label>
                   <select className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all" style={inputStyle}>
-                    <option value="0">No minimum</option>
-                    <option value="100">$100</option>
-                    <option value="1000">$1,000</option>
+                    <option value="0">No minimum (Trace All)</option>
+                    <option value="50">$50 threshold</option>
+                    <option value="100">$100 threshold</option>
+                    <option value="1000">$1,000 threshold</option>
                   </select>
+                  <p className="text-[10px] text-slate-400 mt-1 font-mono">Prunes dust transfers to keep graph clean</p>
                 </div>
               </div>
               <div className="p-4 rounded-lg" style={{ background: isDark ? 'rgba(0, 240, 255, 0.05)' : 'rgba(0, 150, 180, 0.04)', border: isDark ? '1px solid rgba(0, 240, 255, 0.2)' : '1px solid rgba(0, 150, 180, 0.15)' }}>

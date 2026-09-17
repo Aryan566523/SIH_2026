@@ -1,0 +1,422 @@
+{
+  "model_sha256": "abde6b9fd35714a3261ef10976a4eed33606aaee8e6bdaa219e9623671fd9084",
+  "vectors": [
+    {
+      "wallet_id": "syn-wallet-3496",
+      "features": {
+        "tx_count": 21.0,
+        "log_amount_received_total": 3.699056854547668,
+        "log_amount_sent_total": 3.215433981489695,
+        "unique_senders": 1.0,
+        "unique_receivers": 20.0,
+        "log_max_amount": 3.699056854547668,
+        "avg_holding_min": 3.459543258280413,
+        "median_holding_min": 3.459543258280413,
+        "forwarding_ratio": 0.32824600000000004,
+        "activity_frequency": 0.6,
+        "fan_in_ratio": 1.0,
+        "fan_out_ratio": 1.0,
+        "velocity_24h": 0.09523809523809523,
+        "vasp_proximity": 3.0,
+        "mixer_interaction": 0.0,
+        "bridge_interaction": 0.0,
+        "sanctioned_match": 0.0,
+        "distance_from_report": 1.0,
+        "rapid_forwarding_count": 0.0,
+        "fund_split_count": 0.0,
+        "fund_merge_count": 0.0,
+        "min_receive_send_gap_min": 3.459543258280413,
+        "cross_chain_count": 0.0,
+        "wallet_age_days": 1.6127838567197355,
+        "amount_concentration": 54.44250871080139
+      },
+      "label": 0,
+      "logit": -6.610303,
+      "probability": 0.001345,
+      "shap": {
+        "median_holding_min": -4.243394,
+        "avg_holding_min": -0.266034,
+        "activity_frequency": -1.367149
+      },
+      "efficiency_residual": 0.0,
+      "txs": [
+        {
+          "tx_id": "0x20d45e81a495623b22411bb2dd76e5eb66ab850b65b3a7fd99ff0e8d56297876",
+          "from": "0x4271b1c34ad84d982af105cb8201b30c9dad944e",
+          "to": "syn-wallet-3496",
+          "amount": 5000,
+          "timestamp": 1768144000.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x150622a2ef4716e2f3014175c0472da8f6f0e39c497e5d6c093d162ee0a34c16",
+          "from": "syn-wallet-3496",
+          "to": "0xf7270a6888012897d75bfc44d66948b3dbd2a6d9",
+          "amount": 38.53,
+          "timestamp": 1768316800.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x5c3ea5cba07eb3a8c97eed5edc3b8637918759dbba49994873a715cf16de1410",
+          "from": "syn-wallet-3496",
+          "to": "0xe3ce0d4b88f3579815c6a076b638a8306b1a57fc",
+          "amount": 28.25,
+          "timestamp": 1768403200.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0xcd14b275292b953192f19ec5a02b068edaa5620a16b7d68db92f3b97f074b458",
+          "from": "syn-wallet-3496",
+          "to": "0x14ee3b2d6f5a15d789236957fd98bcd7b6bbbe9d",
+          "amount": 102.76,
+          "timestamp": 1768576000.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x7da9163305bf7aba21985e00526c8a2dc226bc7b28c257120f411645af4a5833",
+          "from": "syn-wallet-3496",
+          "to": "0x632c73e0c97f3fa2d4cd6180f59fad77b4e9fdba",
+          "amount": 128.06,
+          "timestamp": 1768748800.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x3e4bc24772603a6a16cfd1bd0e4650458bfea829b84ead668e4a8adb9c87235e",
+          "from": "syn-wallet-3496",
+          "to": "0xe3e0dbf6547eb90e15cec887aa94f0eee1a8ea02",
+          "amount": 114.83,
+          "timestamp": 1769008000.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x38ef6ac267431104fb43c7597d0ca6298833270c64d9deeb94d06300c0c83ace",
+          "from": "syn-wallet-3496",
+          "to": "0xa9a7ff01fe3c0570459bc73bb5e0e137108aee7c",
+          "amount": 83.09,
+          "timestamp": 1769180800.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x8108a192c598136d145c7f558054e910138a31f7e5966d4f5f116cdec2482774",
+          "from": "syn-wallet-3496",
+          "to": "0x7ebe759484a39211bb57cde39c65fe7d71eac4ed",
+          "amount": 27.15,
+          "timestamp": 1769353600.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x140f9dd22e8b29413068300254d3397008c2f34c435d338066d8b7664307dc20",
+          "from": "syn-wallet-3496",
+          "to": "0x101abb5245c6d6b318054422a380ed1fe83417e6",
+          "amount": 35.45,
+          "timestamp": 1769440000.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x83d2a3110b129a8af62f0da0bd4314cdea5d65aa747be9581d53a7d97cf48c13",
+          "from": "syn-wallet-3496",
+          "to": "0xe97b1188f6936568dbb13b092e046cd13c1eaf6a",
+          "amount": 81.82,
+          "timestamp": 1769526400.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x6dbae0ad0288f4a84c996542ce4d1b082dbd7fd613c9b21df6ec8865d71948dd",
+          "from": "syn-wallet-3496",
+          "to": "0x5abf856683129abb2ffac9f0025ffb8ecfdbf852",
+          "amount": 75.41,
+          "timestamp": 1769612800.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0xb4da941c395f8735d4bd72339b3e3fdd35359fc9cb5a3de1bd40d332a80962d3",
+          "from": "syn-wallet-3496",
+          "to": "0x777dae09d6c2d48c95d611d893d7fb5f0f29e0e8",
+          "amount": 41.13,
+          "timestamp": 1769872000.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x67fe73a3be69fa98df098dbfefdef89e0e6769196bcabf8a9066698db4458d4e",
+          "from": "syn-wallet-3496",
+          "to": "0x0b968b6574145bc0527b30005a23dd119df0fbb6",
+          "amount": 139.23,
+          "timestamp": 1769958400.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0xbada18678b4e6916bc2771d6c460fa71ff0b66722ee0a295730c68b839be0be3",
+          "from": "syn-wallet-3496",
+          "to": "0xf94a217a8b3e25766cfa2c615bce457b659c4536",
+          "amount": 140.91,
+          "timestamp": 1770217600.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0xaff04743479449ca471f7ebd5a4765f9a24a67c6ade3cbfccd84bf7c4b95ed31",
+          "from": "syn-wallet-3496",
+          "to": "0x179c5faf0841b379e5d57919336dace69d9977fd",
+          "amount": 95.71,
+          "timestamp": 1770304000.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x9326056ce1f02dd75dad7e749c8bc24c37199cb54332caaff5bdafdc251242be",
+          "from": "syn-wallet-3496",
+          "to": "0x634520eeccee845902a7a584328797c464dd1d90",
+          "amount": 34.39,
+          "timestamp": 1770476800.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x3d42fb0a524a5b080acf13c08990ba5d6beac5f427b7130eb9b0941cef819a81",
+          "from": "syn-wallet-3496",
+          "to": "0x0235ec8b9a64c928dacdf144400077e98f5040a9",
+          "amount": 90.84,
+          "timestamp": 1770736000.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0xfdf675f5530cc36239dcc7ece9a95e6582dc76f517194358228e1152395a0532",
+          "from": "syn-wallet-3496",
+          "to": "0x841809d5ed943bc8de986fa7ed113171d071d4c8",
+          "amount": 28.0,
+          "timestamp": 1770822400.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x715cd92429b1b5c2c6035abf2a789a1557f88e22d9c8c4f84e9ed296f285f981",
+          "from": "syn-wallet-3496",
+          "to": "0x08f5077929cac01c0c224adef9b705bcec7f33bb",
+          "amount": 107.22,
+          "timestamp": 1770995200.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0xa39a1dd486a4b40ed1e9f55c84f3d156b222deba3f9790b3717d7852343d78fd",
+          "from": "syn-wallet-3496",
+          "to": "0x1e63e625701758f6cea1c325a77dd0bf704f56d4",
+          "amount": 110.4,
+          "timestamp": 1771081600.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0xdea5a8ff63a3fdcef66db14bddba2664668101ece3a0c4297d39a349aa2744d8",
+          "from": "syn-wallet-3496",
+          "to": "0xe90113d7ce1228d855f1ab9b346c7c6eb0bb28cb",
+          "amount": 138.05,
+          "timestamp": 1771168000.0,
+          "chain": "ETH",
+          "kind": "normal"
+        }
+      ],
+      "first_seen": 1767712000,
+      "distance_from_report": 1.0
+    },
+    {
+      "wallet_id": "syn-wallet-876",
+      "features": {
+        "tx_count": 7.0,
+        "log_amount_received_total": 4.70531288631383,
+        "log_amount_sent_total": 4.86389444370257,
+        "unique_senders": 3.0,
+        "unique_receivers": 4.0,
+        "log_max_amount": 4.698978690138799,
+        "avg_holding_min": 1.265211027637486,
+        "median_holding_min": 1.2628464420398469,
+        "forwarding_ratio": 1.4407352298559108,
+        "activity_frequency": 7.0,
+        "fan_in_ratio": 1.0,
+        "fan_out_ratio": 1.0,
+        "velocity_24h": 1.0,
+        "vasp_proximity": 1.0,
+        "mixer_interaction": 0.0,
+        "bridge_interaction": 1.0,
+        "sanctioned_match": 0.0,
+        "distance_from_report": 2.0,
+        "rapid_forwarding_count": 3.0,
+        "fund_split_count": 0.0,
+        "fund_merge_count": 0.0,
+        "min_receive_send_gap_min": 1.2588766293721312,
+        "cross_chain_count": 0.0,
+        "wallet_age_days": 1.9036067236239356,
+        "amount_concentration": 134.92727419920664
+      },
+      "label": 1,
+      "logit": 5.949518,
+      "probability": 0.9974,
+      "shap": {
+        "median_holding_min": 4.855878,
+        "avg_holding_min": 0.332193,
+        "activity_frequency": 1.495173
+      },
+      "efficiency_residual": 0.0,
+      "txs": [
+        {
+          "tx_id": "0xb560eecfd9c6744f7382d26fa6840e77b4e0ce709e97db10aeff7868c704450a",
+          "from": "0x059833d260867c597cb9e0e7de903ad460629b71",
+          "to": "syn-wallet-876",
+          "amount": 50000,
+          "timestamp": 1776406000.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x56a4f677d0c2f62d6f172ec591f6d59a5f46fd27f9b761a63477181363d1564a",
+          "from": "syn-wallet-876",
+          "to": "0x48c92b1688c096d1072c5a43c07d0a23c6b52616",
+          "amount": 47500.0,
+          "timestamp": 1776407039.0,
+          "chain": "ETH",
+          "kind": "bridge"
+        },
+        {
+          "tx_id": "0x5c95d0433fd6d4580bebb1774d6d1d6cb978f39c8c9f6607566f6bf7ba7b25ef",
+          "from": "syn-wallet-876",
+          "to": "0x28C6c06298d514Db089934071355E5743bf21d60",
+          "amount": 25000.0,
+          "timestamp": 1776413200.0,
+          "chain": "ETH",
+          "kind": "vasp"
+        },
+        {
+          "tx_id": "0x8013844a0b6f5d2dd924d153985e855a79b05566b762ff31ae7e24466929b04c",
+          "from": "0x19aaef112cab88ae660c61825cbc456ddc5766ea",
+          "to": "syn-wallet-876",
+          "amount": 365.04,
+          "timestamp": 1776442000.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x03a593891c222047ed5f3918572a8ed92aced57208b0aa5b8aaa37cf83b07729",
+          "from": "syn-wallet-876",
+          "to": "0xd1ff3393465f2aa3c426cb9824e8bb2445638a1c",
+          "amount": 292.35,
+          "timestamp": 1776443067.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x8b9ec193e6fa9f6db2cb1d0a27fb02cfaaad02ffb5b5771db5abf27c0a29fd64",
+          "from": "0xb2164398e0c4ee8cfb6ea1e4f7d9e593030ff28e",
+          "to": "syn-wallet-876",
+          "amount": 369.57,
+          "timestamp": 1776445600.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x8a1a1dd697cb6cac9eaf0a5db819aafe95b0cd4c4695c0b56e6aeaf92c2dca70",
+          "from": "syn-wallet-876",
+          "to": "0xf7eb24150208f9ff1055528590f480820ddd1cac",
+          "amount": 302.79,
+          "timestamp": 1776446629.0,
+          "chain": "ETH",
+          "kind": "normal"
+        }
+      ],
+      "first_seen": 1769612800,
+      "distance_from_report": 2.0
+    },
+    {
+      "wallet_id": "syn-wallet-3953",
+      "features": {
+        "tx_count": 4.0,
+        "log_amount_received_total": 4.000043427276863,
+        "log_amount_sent_total": 3.105206924334293,
+        "unique_senders": 2.0,
+        "unique_receivers": 2.0,
+        "log_max_amount": 3.9031442704095385,
+        "avg_holding_min": 3.556423121371285,
+        "median_holding_min": 3.63558426631123,
+        "forwarding_ratio": 0.12731099999999998,
+        "activity_frequency": 0.3333333333333333,
+        "fan_in_ratio": 1.0,
+        "fan_out_ratio": 1.0,
+        "velocity_24h": 0.25,
+        "vasp_proximity": 1.0,
+        "mixer_interaction": 0.0,
+        "bridge_interaction": 0.0,
+        "sanctioned_match": 0.0,
+        "distance_from_report": 1.0,
+        "rapid_forwarding_count": 0.0,
+        "fund_split_count": 0.0,
+        "fund_merge_count": 0.0,
+        "min_receive_send_gap_min": 3.459543258280413,
+        "cross_chain_count": 0.0,
+        "wallet_age_days": 1.1760912590556813,
+        "amount_concentration": 3.99800099950025
+      },
+      "label": 0,
+      "logit": -6.610303,
+      "probability": 0.001345,
+      "shap": {
+        "median_holding_min": -4.243394,
+        "avg_holding_min": -0.266034,
+        "activity_frequency": -1.367149
+      },
+      "efficiency_residual": 0.0,
+      "txs": [
+        {
+          "tx_id": "0xfc2f6e82c886bd5161ed6b31be199285e1dee936c31ba1a9e1227fd183d08b93",
+          "from": "0xa835d35c442cd36170abafe78b371cf04a82b7ab",
+          "to": "syn-wallet-3953",
+          "amount": 8000,
+          "timestamp": 1770908800.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x418424f034cd245af1afda0d96e8388180fb5adf98fcb600c020414715f0c75a",
+          "from": "syn-wallet-3953",
+          "to": "0x267be1c1d684f78cb4f6a176c4911b741e4ffdc0",
+          "amount": 1034.1,
+          "timestamp": 1771168000.0,
+          "chain": "ETH",
+          "kind": "vasp"
+        },
+        {
+          "tx_id": "0xf000aea5b8ebc1102bcb2e240452bfadecea3af85fb0dd7623db4eda2778f51e",
+          "from": "0x70004bf3f5b9c761ec9524209197fccf8146b238",
+          "to": "syn-wallet-3953",
+          "amount": 2000,
+          "timestamp": 1771772800.0,
+          "chain": "ETH",
+          "kind": "normal"
+        },
+        {
+          "tx_id": "0x3421de8c2a02b5eaeabae791ef335eba37eb33362000dbe64221a76f10a51a55",
+          "from": "syn-wallet-3953",
+          "to": "0x28C6c06298d514Db089934071355E5743bf21d60",
+          "amount": 239.01,
+          "timestamp": 1771945600.0,
+          "chain": "ETH",
+          "kind": "vasp"
+        }
+      ],
+      "first_seen": 1770736000,
+      "distance_from_report": 1.0
+    }
+  ]
+}

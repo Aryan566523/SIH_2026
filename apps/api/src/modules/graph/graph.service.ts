@@ -17,29 +17,61 @@ export class GraphService {
   ) {}
 
   async buildGraphForAddress(address: string, blockchain: BlockchainType, depth: number = 3): Promise<GraphData> {
-    const txs = await this.txRepo.find({
-      where: [
-        { from: address, chain: blockchain },
-        { to: address, chain: blockchain },
-      ],
-      order: { timestamp: 'DESC' },
-      take: 500,
-    });
+    const cleanAddr = (address || '').trim().toLowerCase();
+    const maxDepth = Math.max(1, Math.min(depth || 3, 50));
 
     const addressSet = new Set<string>();
-    addressSet.add(address);
+    addressSet.add(cleanAddr);
 
-    for (const tx of txs) {
-      if (tx.from) addressSet.add(tx.from);
-      if (tx.to) addressSet.add(tx.to);
+    let currentLayer = new Set<string>([cleanAddr]);
+    const allTxs: NormalizedTransaction[] = [];
+    const seenTxHashes = new Set<string>();
+
+    for (let d = 0; d < maxDepth; d++) {
+      if (currentLayer.size === 0) break;
+
+      const layerAddrs = Array.from(currentLayer);
+      const txs = await this.txRepo.createQueryBuilder('t')
+        .where('(LOWER(t.from) IN (:...addrs) OR LOWER(t.to) IN (:...addrs)) AND t.chain = :blockchain', {
+          addrs: layerAddrs,
+          blockchain,
+        })
+        .orderBy('t.timestamp', 'DESC')
+        .take(300)
+        .getMany();
+
+      const nextLayer = new Set<string>();
+      for (const tx of txs) {
+        if (!seenTxHashes.has(tx.txHash)) {
+          seenTxHashes.add(tx.txHash);
+          allTxs.push(tx);
+        }
+
+        const f = (tx.from || '').toLowerCase();
+        const t = (tx.to || '').toLowerCase();
+        if (f && !addressSet.has(f)) {
+          addressSet.add(f);
+          nextLayer.add(f);
+        }
+        if (t && !addressSet.has(t)) {
+          addressSet.add(t);
+          nextLayer.add(t);
+        }
+      }
+
+      currentLayer = nextLayer;
+      if (addressSet.size > 500) break; // keep layout responsive for large multi-hop graphs
     }
 
     // Find wallets in our database for these addresses
-    const wallets = await this.walletRepo.find({
-      where: Array.from(addressSet).map((addr) => ({ address: addr, blockchain })),
-    });
+    const wallets = await this.walletRepo.createQueryBuilder('w')
+      .where('LOWER(w.address) IN (:...addresses) AND w.blockchain = :blockchain', {
+        addresses: Array.from(addressSet),
+        blockchain,
+      })
+      .getMany();
 
-    const walletMap = new Map(wallets.map((w) => [w.address, w]));
+    const walletMap = new Map(wallets.map((w) => [w.address.toLowerCase(), w]));
 
     const nodes: GraphNode[] = [];
     const nodeSet = new Set<string>();
@@ -50,17 +82,18 @@ export class GraphService {
 
       const wallet = walletMap.get(addr);
       const type = this.determineNodeType(addr, address, wallet);
+      const ownerName = (wallet?.metadata as any)?.ownerName;
 
       nodes.push({
         id: addr,
         type,
-        label: wallet?.label || wallet?.entityLabel || this.shortenAddress(addr),
+        label: wallet?.label || wallet?.entityLabel || (ownerName ? `${ownerName} (${this.shortenAddress(addr)})` : this.shortenAddress(addr)),
         address: addr,
         blockchain,
         riskScore: wallet?.riskScore,
         riskLevel: wallet?.riskLevel,
         entityLabel: wallet?.entityLabel || undefined,
-        balance: wallet?.totalReceived,
+        balance: (wallet?.metadata as any)?.liveBalance || wallet?.totalReceived,
         totalReceived: wallet?.totalReceived,
         totalSent: wallet?.totalSent,
         firstSeen: wallet?.firstSeen?.toISOString(),
@@ -69,12 +102,12 @@ export class GraphService {
     }
 
     const edges: GraphEdge[] = [];
-    for (const tx of txs) {
+    for (const tx of allTxs) {
       if (tx.from && tx.to) {
         edges.push({
           id: tx.id,
-          source: tx.from,
-          target: tx.to || '',
+          source: tx.from.toLowerCase(),
+          target: tx.to.toLowerCase(),
           type: 'SENT_TO',
           txHash: tx.txHash,
           amount: tx.amountNormalized,
@@ -83,7 +116,9 @@ export class GraphService {
           blockchain: tx.chain,
           fiatEquivalent: tx.fiatValueAtTime,
           blockNumber: tx.blockNumber,
-        });
+          status: tx.status,
+          verificationStatus: tx.verificationStatus,
+        } as any);
       }
     }
 
@@ -101,7 +136,7 @@ export class GraphService {
     return this.neo4j.getNeighbors(address, depth);
   }
 
-  async traceForward(address: string, blockchain: BlockchainType, maxHops: number = 10): Promise<GraphData> {
+  async traceForward(address: string, blockchain: BlockchainType, maxHops: number = 50): Promise<GraphData> {
     const visited = new Set<string>();
     const allNodes: GraphNode[] = [];
     const allEdges: GraphEdge[] = [];
@@ -160,7 +195,7 @@ export class GraphService {
     return { nodes: allNodes, edges: allEdges };
   }
 
-  async traceBackward(address: string, blockchain: BlockchainType, maxHops: number = 10): Promise<GraphData> {
+  async traceBackward(address: string, blockchain: BlockchainType, maxHops: number = 50): Promise<GraphData> {
     const visited = new Set<string>();
     const allNodes: GraphNode[] = [];
     const allEdges: GraphEdge[] = [];

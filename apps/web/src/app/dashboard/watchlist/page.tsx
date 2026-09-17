@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { List, Plus, Trash2, Shield, Clock } from 'lucide-react';
+import { List, Plus, Trash2, Shield, Clock, Copy } from 'lucide-react';
 import { watchlistApi } from '@/lib/api';
 import { useUIStore } from '@/lib/stores/ui.store';
 import { cn, shortenAddress, timeAgo, getSeverityColor } from '@/lib/utils';
@@ -124,14 +125,40 @@ export default function WatchlistPage() {
                   <Shield className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-mono" style={{ color: isDark ? '#ffffff' : '#101318' }}>{shortenAddress(entry.walletAddress)}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-mono font-bold" style={{ color: isDark ? '#ffffff' : '#101318' }}>{shortenAddress(entry.walletAddress, 8)}</p>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(entry.walletAddress);
+                        addToast('success', 'Address copied to clipboard');
+                      }}
+                      className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-white"
+                      title="Copy Address"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </button>
+                  </div>
                   <p className="text-xs mt-0.5" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>{entry.reason}</p>
                   <p className="text-[10px] mt-0.5" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>{entry.blockchain} • {timeAgo(entry.createdAt)}</p>
                 </div>
               </div>
-              <button onClick={() => handleRemove(entry.id)} className="p-2 transition-colors" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/dashboard/wallets/${encodeURIComponent(entry.walletAddress)}`}
+                  className="px-2.5 py-1 rounded text-xs font-mono font-semibold text-neon-cyan hover:bg-neon-cyan/10 border border-neon-cyan/30 transition-colors"
+                >
+                  Intelligence
+                </Link>
+                <Link
+                  href={`/dashboard/graph?address=${encodeURIComponent(entry.walletAddress)}&depth=3`}
+                  className="px-2.5 py-1 rounded text-xs font-mono font-semibold text-violet-400 hover:bg-violet-500/10 border border-violet-500/30 transition-colors"
+                >
+                  Trace
+                </Link>
+                <button onClick={() => handleRemove(entry.id)} className="p-2 transition-colors hover:text-red-400" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </motion.div>
           ))}
         </div>

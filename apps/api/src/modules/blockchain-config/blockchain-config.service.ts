@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BlockchainApiConfig, BlockchainFallbackConfig } from '../../database/entities';
@@ -78,12 +78,19 @@ export class BlockchainConfigService {
 
     try {
       const start = Date.now();
-      const url = config.primaryEndpointUrl.replace('{ADDRESS}', address).replace('{API_KEY}', config.apiKey);
-      
+      const headers: Record<string, string> = { Accept: 'application/json' };
+      let finalUrl = config.primaryEndpointUrl.replace('{ADDRESS}', address).replace('{API_KEY}', config.apiKey);
+
+      if (config.primaryProviderName?.toLowerCase().includes('tron') || config.chain === 'TRON') {
+        headers['TRON-PRO-API-KEY'] = config.apiKey;
+      } else if (config.primaryProviderName?.toLowerCase().includes('chainabuse')) {
+        headers['Authorization'] = 'Basic ' + Buffer.from(config.apiKey + ':').toString('base64');
+      }
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), config.timeoutMs || 5000);
+      const timeoutId = setTimeout(() => controller.abort(), config.timeoutMs || 6000);
       
-      const res = await fetch(url, { signal: controller.signal });
+      const res = await fetch(finalUrl, { headers, signal: controller.signal });
       clearTimeout(timeoutId);
 
       const latencyMs = Date.now() - start;
@@ -94,8 +101,8 @@ export class BlockchainConfigService {
       
       const text = await res.text();
       // Basic check to see if it looks like an error response
-      if (text.toLowerCase().includes('invalid api key')) {
-        throw new Error('Invalid API Key');
+      if (text.toLowerCase().includes('invalid api key') || text.toLowerCase().includes('invalid credentials')) {
+        throw new Error('Invalid API Key / Credentials');
       }
 
       return { status: 'success', latencyMs, dataSource: 'LIVE' };

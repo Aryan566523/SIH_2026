@@ -80,7 +80,7 @@ export class DashboardService {
         id: a.id,
         action: `Alert [${a.severity}]: ${a.title}`,
         type: a.severity === 'CRITICAL' ? 'critical' : 'warning',
-        message: a.description,
+        message: a.message,
         createdAt: a.createdAt,
       });
     });

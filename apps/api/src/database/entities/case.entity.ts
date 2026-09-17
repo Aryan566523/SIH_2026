@@ -48,6 +48,14 @@ export class Case {
   @Column({ type: 'simple-enum', enum: RiskLevel, default: RiskLevel.LOW, name: 'risk_level' })
   riskLevel: RiskLevel;
 
+  /** CONDITION: claimed loss matching no on-chain transfer => unsubstantiated, pending review (not auto-rejected) */
+  @Column({ default: false, name: 'loss_unsubstantiated' })
+  lossUnsubstantiated: boolean;
+
+  /** Duplicate wallet reported in multiple open cases: this case links to the earlier one (CONDITIONS §1) */
+  @Column({ name: 'related_case_id', nullable: true, type: 'varchar' })
+  relatedCaseId: string | null;
+
   @ManyToOne(() => Organization, (org) => org.cases)
   @JoinColumn({ name: 'organization_id' })
   organization: Organization;

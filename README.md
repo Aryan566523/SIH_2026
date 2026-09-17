@@ -1,303 +1,346 @@
 # 🛡️ ChainSentinel AI
 
-**Real-Time Multi-Chain Crypto Fraud Attribution & Investigation Intelligence Platform**
+**Real-Time Identification of Fraud-Linked Cryptocurrency Exchanges from Victim-Reported Suspect Wallet Addresses through Automated Blockchain Analytics**
 
-A production-grade, AI-assisted blockchain intelligence platform for law enforcement agencies, cybercrime investigators, and blockchain analysts. Converts victim-reported cryptocurrency wallet addresses into automated investigations with VASP attribution and evidence-backed risk scoring.
+> Smart India Hackathon 2024 — Problem Statement PS-26183 | Ministry of Home Affairs (I4C Division)
+
+---
+
+## 📌 What Is This?
+
+ChainSentinel AI is an AI-powered blockchain forensics platform built for **Indian Law Enforcement Agencies (LEAs)**. When a victim of cryptocurrency fraud walks into a police station and provides a suspect wallet address, this platform:
+
+1. Automatically traces how the money flowed across the blockchain
+2. Identifies what exchange (VASP) the money ultimately reached
+3. Generates evidence-backed police reports and freeze-request drafts
+
+---
 
 ## 🏗️ Architecture
 
 ```
 chainsentinel-ai/
 ├── apps/
-│   ├── web/           # Next.js 14 frontend (App Router, Tailwind, shadcn-inspired)
+│   ├── web/           # Next.js 14 frontend (App Router, Tailwind, React Flow)
 │   ├── api/           # NestJS backend (REST + WebSocket + Swagger)
-│   └── worker/        # BullMQ investigation worker
+│   └── worker/        # BullMQ background investigation worker
 ├── packages/
 │   ├── types/         # Shared TypeScript types
 │   ├── config/        # Shared configuration
 │   └── logger/        # Structured logging
 ├── infrastructure/
 │   └── docker/        # Docker configs
+├── ml/                # Python XGBoost model training pipeline
 ├── docker-compose.yml
 └── .env.example
 ```
 
+---
+
 ## 🔧 Technology Stack
 
 | Layer | Technology |
-|-------|-----------|
-| **Frontend** | Next.js 14, React 18, TypeScript, Tailwind CSS, Framer Motion, React Flow, Recharts, TanStack Query, Zustand |
+|-------|------------|
+| **Frontend** | Next.js 14, React 18, TypeScript, Tailwind CSS, Framer Motion, React Flow, Recharts, Zustand |
 | **Backend** | NestJS 10, TypeORM, Passport JWT, class-validator, Swagger/OpenAPI |
-| **Database** | PostgreSQL 16, Neo4j 5, Redis 7 |
-| **Queue** | BullMQ + Redis |
-| **Realtime** | Socket.IO (WebSocket) |
-| **Blockchain** | Multi-provider abstraction (Alchemy, Infura, TronGrid, Etherscan) |
-| **Auth** | JWT access/refresh tokens, bcrypt, RBAC, MFA-ready |
-| **DevOps** | Docker, docker-compose |
+| **AI / ML** | XGBoost (trained in Python, runs in Node.js via JSON model artifacts), SHAP explainability, rule-based heuristic fallback |
+| **Database** | PostgreSQL 16 (primary), Neo4j 5 (graph queries), Redis 7 (cache + queue) |
+| **Queue** | BullMQ + Redis (concurrent investigation isolation) |
+| **Realtime** | Socket.IO WebSocket (live pipeline progress to browser) |
+| **Blockchain** | Multi-provider abstraction: Etherscan, TronGrid, Blockscout, Alchemy, Infura |
+| **Auth** | JWT access + refresh tokens, bcrypt, RBAC (Admin/Supervisor/Investigator) |
+| **DevOps** | Docker, docker-compose, pnpm workspaces |
 
-## 🚀 Quick Start
+---
+
+## 🚀 Quick Start (Development)
 
 ### Prerequisites
-- Node.js >= 18
-- pnpm >= 8
-- Docker & Docker Compose
 
-### Setup
+- **Node.js** >= 18.0
+- **pnpm** >= 8.0 (`npm install -g pnpm`)
+- **Docker** & **Docker Compose** (for PostgreSQL, Neo4j, Redis)
+
+### Step-by-Step Setup
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone <repo-url>
 cd chainsentinel-ai
 
-# Copy environment file
+# 2. Copy environment file and fill in your API keys
 cp .env.example .env
+# Edit .env — add ETHERSCAN_API_KEY, TRONGRID_API_KEY etc.
 
-# Start databases
-docker compose up -d
+# 3. Start all databases via Docker
+docker compose up -d postgres neo4j redis
 
-# Install dependencies
+# 4. Install all dependencies
 pnpm install
 
-# Run database migrations and seed
-pnpm db:migrate
-pnpm db:seed
+# 5. Run database migrations
+pnpm --filter @chainsentinel/api db:migrate
 
-# Start development servers
+# 6. Seed default users and sample data
+pnpm --filter @chainsentinel/api db:seed
+
+# 7. Start all development servers in parallel
 pnpm dev
 ```
 
 This starts:
-- Frontend: http://localhost:3000
-- API: http://localhost:3001
-- API Docs: http://localhost:3001/docs
-- Neo4j Browser: http://localhost:7474
-
-### Docker Setup (Full Stack)
-
-```bash
-docker compose up -d
-```
-
-## 🔑 Default Users
-
-After running the seed script, the following users are created. **Change passwords immediately in production.**
-
-| Role | Email |
-|------|-------|
-| Super Admin | admin@chainsentinel.gov.in |
-| Supervisor | supervisor@chainsentinel.gov.in |
-| Investigator | investigator@chainsentinel.gov.in |
-
-## 📋 Features
-
-### Core Investigation Pipeline
-1. **Wallet Submission** → Accept victim-reported wallet addresses
-2. **Blockchain Detection** → Auto-detect chain from address format
-3. **Transaction Ingestion** → Fetch and normalize blockchain transactions
-4. **Graph Generation** → Build transaction relationship graph in Neo4j
-5. **Fund-Flow Tracing** → BFS/DFS forward and backward tracing with cycle detection
-6. **Intermediary Detection** → Identify burner/intermediary wallets
-7. **Cross-Chain Analysis** → Detect bridge interactions and chain transfers
-8. **VASP Attribution** → Match wallets to known entities with confidence scoring
-9. **Risk Scoring** → Explainable multi-factor risk assessment
-10. **Fraud Pattern Detection** → Rapid forwarding, fan-out, fan-in, layering
-11. **Case Correlation** → Link related complaints and investigations
-12. **Recommendations** → Evidence-based investigative recommendations
-
-### UI/UX
-- **Cyber-intelligence command center** dark theme
-- **Animated dashboard** with real-time metrics
-- **Interactive transaction graph** with node types, zoom, pan
-- **Investigation wizard** with step-by-step progress
-- **Live trace screen** with real-time pipeline progress
-- **VASP attribution card** with confidence breakdown
-- **Risk assessment** with explainable factors
-- **Alert center** with severity filtering
-- **Watchlist** management with monitoring
-- **PDF report generation** with SHA-256 integrity
-- **Global search** with command palette (⌘K)
-- **Responsive design** for desktop/tablet
-- **Accessibility** (keyboard nav, ARIA, reduced-motion)
-
-### Security
-- JWT access + refresh token rotation
-- Role-based access control (6 roles)
-- Case-level authorization
-- Password hashing (bcrypt, 12 rounds)
-- API rate limiting
-- Input validation (class-validator)
-- CORS configuration
-- CSP headers
-- Audit logging
-- Provider secrets server-side only
-
-## 🌐 API Endpoints
-
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/login` | Login |
-| POST | `/api/auth/register` | Register user |
-| POST | `/api/auth/refresh` | Refresh token |
-| POST | `/api/auth/logout` | Logout |
-| POST | `/api/auth/logout-all` | Logout all sessions |
-
-### Cases
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/cases` | List cases |
-| POST | `/api/cases` | Create case |
-| GET | `/api/cases/:id` | Get case |
-| GET | `/api/cases/stats` | Case statistics |
-| PATCH | `/api/cases/:id/status` | Update status |
-
-### Investigations
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/investigations` | Start investigation |
-| GET | `/api/investigations` | List investigations |
-| GET | `/api/investigations/:id` | Get investigation |
-| GET | `/api/investigations/:id/jobs` | Get pipeline jobs |
-
-### Wallets
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/wallets/search` | Search wallets |
-| GET | `/api/wallets/:address` | Get wallet |
-| GET | `/api/wallets/:address/transactions` | Transactions |
-| GET | `/api/wallets/:address/risk` | Risk assessment |
-| GET | `/api/wallets/:address/attribution` | VASP attribution |
-
-### Graph
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/graph/build` | Build graph for address |
-| GET | `/api/graph/case/:caseId` | Get case graph |
-| POST | `/api/graph/trace/forward` | Trace forward |
-| POST | `/api/graph/trace/backward` | Trace backward |
-
-### Alerts, Watchlist, VASP, Reports, Search, Health, Admin
-Full CRUD for all entities. See `/docs` for Swagger documentation.
-
-## 🗃️ Database Models
-
-### PostgreSQL
-- User, Organization, Session
-- Case, Complaint
-- Investigation, InvestigationJob
-- Wallet, NormalizedTransaction
-- VASP, Attribution
-- RiskAssessment, FraudPattern
-- CrossChainTransfer
-- WatchlistEntry
-- Alert
-- Report
-- WalletCluster
-- AuditLog
-
-### Neo4j
-- Wallet nodes, Entity nodes, VASP nodes
-- SENT_TO, RECEIVED_FROM, BRIDGED_TO relationships
-- Wallet clusters, fund-flow paths
-
-## 🔧 Environment Variables
-
-See `.env.example` for all configuration. Key variables:
-
-```env
-DATABASE_URL=postgresql://...
-NEO4J_URI=bolt://localhost:7687
-REDIS_URL=redis://localhost:6379
-JWT_SECRET=your-secret-key
-ALCHEMY_API_KEY=your-key
-TRONGRID_API_KEY=your-key
-```
-
-## 🧪 Testing
-
-```bash
-# Unit tests
-pnpm test:unit
-
-# Integration tests
-pnpm test:integration
-
-# E2E tests (Playwright)
-pnpm test:e2e
-
-# Type checking
-pnpm typecheck
-
-# Linting
-pnpm lint
-```
-
-## 📊 Investigation Pipeline
-
-```
-INVESTIGATION_REQUESTED
-        ↓
-ADDRESS_VALIDATION
-        ↓
-CHAIN_DETECTION
-        ↓
-TRANSACTION_INGESTION
-        ↓
-TRANSACTION_NORMALIZATION
-        ↓
-GRAPH_BUILD
-        ↓
-FUND_FLOW_TRACE
-        ↓
-ENTITY_MATCHING
-        ↓
-CROSS_CHAIN_ANALYSIS
-        ↓
-PATTERN_ANALYSIS
-        ↓
-RISK_SCORING
-        ↓
-VASP_ATTRIBUTION
-        ↓
-CASE_CORRELATION
-        ↓
-RECOMMENDATION_GENERATION
-        ↓
-INVESTIGATION_COMPLETED
-```
-
-## 🎯 Acceptance Test Workflow
-
-```
-Login as Investigator
-  → Create new cyber fraud case
-  → Enter suspect wallet
-  → Start investigation
-  → Automatically identify blockchain
-  → Load blockchain transactions
-  → Generate transaction graph
-  → Discover connected wallets
-  → Detect suspicious intermediary wallet
-  → Identify bridge/DEX interaction
-  → Continue tracing
-  → Match known entity/VASP
-  → Calculate attribution confidence
-  → Calculate wallet risk
-  → Display explainable risk factors
-  → Generate realtime alert
-  → Add suspect wallet to watchlist
-  → Open interactive graph
-  → Inspect transaction evidence
-  → Generate investigation recommendations
-  → Generate PDF report
-  → Verify evidence hash
-  → Verify audit log
-```
-
-## 📝 License
-
-This project is developed for Smart India Hackathon (SIH) 2026.
+| Service | URL |
+|---------|-----|
+| Frontend (Next.js) | http://localhost:3000 |
+| API (NestJS) | http://localhost:3001 |
+| Swagger API Docs | http://localhost:3001/docs |
+| Neo4j Browser | http://localhost:7474 |
+| Redis | localhost:6379 |
+| PostgreSQL | localhost:5432 |
 
 ---
 
-**ChainSentinel AI** — *Trace the Money. Identify the Exit. Accelerate the Investigation.*
+## 🌐 Production / Server Deployment
+
+### Prerequisites on Server
+
+```bash
+# Install Node.js 18+
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Install pnpm
+npm install -g pnpm
+
+# Install Docker
+sudo apt-get install -y docker.io docker-compose-plugin
+sudo systemctl enable docker && sudo systemctl start docker
+```
+
+### Full Docker Production Deploy
+
+```bash
+# 1. Clone and configure
+git clone <repo-url> /opt/chainsentinel
+cd /opt/chainsentinel
+cp .env.example .env
+nano .env   # Set all production secrets and API keys
+
+# 2. Build all services
+docker compose -f docker-compose.yml build
+
+# 3. Start all services (database + app)
+docker compose -f docker-compose.yml up -d
+
+# 4. Run migrations inside the running API container
+docker compose exec api pnpm db:migrate
+docker compose exec api pnpm db:seed
+
+# 5. Verify all containers are healthy
+docker compose ps
+```
+
+### Environment Variables (Production)
+
+```env
+# Database
+DATABASE_URL=postgresql://chainsentinel:PASSWORD@postgres:5432/chainsentinel
+REDIS_URL=redis://redis:6379
+
+# Neo4j
+NEO4J_URI=bolt://neo4j:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=your_secure_password
+
+# JWT (generate with: openssl rand -hex 64)
+JWT_SECRET=your_256_bit_random_secret_here
+JWT_REFRESH_SECRET=another_256_bit_random_secret_here
+
+# Blockchain API Keys
+ETHERSCAN_API_KEY=your_etherscan_key
+TRONGRID_API_KEY=your_trongrid_key
+ALCHEMY_API_KEY=your_alchemy_key
+INFURA_PROJECT_ID=your_infura_id
+
+# Application
+NEXT_PUBLIC_API_URL=https://your-domain.com
+API_PORT=3001
+NODE_ENV=production
+```
+
+### Build Only (Without Docker)
+
+```bash
+# Build all packages
+pnpm build
+
+# Start API in production mode
+cd apps/api && node dist/main.js
+
+# Start web in production mode
+cd apps/web && pnpm start
+```
+
+### Reverse Proxy (Nginx)
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location /api/ {
+        proxy_pass http://localhost:3001/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location / {
+        proxy_pass http://localhost:3000/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+---
+
+## 🔑 Default Users
+
+After seeding, these users are created. **Change all passwords immediately in production.**
+
+| Role | Email | Default Password |
+|------|-------|-----------------|
+| Super Admin | admin@chainsentinel.gov.in | Admin@1234 |
+| Supervisor | supervisor@chainsentinel.gov.in | Super@1234 |
+| Investigator | investigator@chainsentinel.gov.in | Invest@1234 |
+
+Create admin manually:
+```bash
+pnpm --filter @chainsentinel/api db:admin
+```
+
+---
+
+## 📋 Core Features
+
+### 1. Automated Investigation Pipeline
+| Stage | Description |
+|-------|-------------|
+| Address Validation | Validates format against ETH/TRON/BTC patterns |
+| Chain Detection | Auto-detects blockchain from address format |
+| Transaction Ingestion | Database-first cache, then live blockchain API |
+| Graph Build | Constructs transaction relationship graph in Neo4j |
+| Fund-Flow Tracing | BFS/DFS with VASP auto-stop boundary detection |
+| Entity Matching | Labels wallets as VASP, Mixer, Bridge, Miner etc. |
+| Cross-Chain Analysis | Detects bridge interactions and chain hops |
+| Risk Scoring | XGBoost ML + SHAP explanation (falls back to rules) |
+| VASP Attribution | Identifies destination exchange for freeze request |
+| Pattern Detection | Fan-Out, Peel Chain, Rapid Forwarding, Smurfing |
+| Evidence Generation | SHA-256 integrity hash for chain of custody |
+| Report Generation | PDF court-admissible report with Section 91 notice draft |
+
+### 2. Smart Victim Wallet Resolver
+If the complainant only knows their **own** wallet (not the scammer's), the platform:
+1. Scans outgoing transactions from the victim's wallet
+2. Identifies funds sent to unknown addresses
+3. Auto-selects the most likely fraud destination as the investigation target
+
+### 3. Multi-User Concurrent Safety
+- `orIgnore()` INSERT strategy prevents duplicate key conflicts when multiple investigators scan the same wallet simultaneously
+- BullMQ isolates each investigation as an independent job
+- Database-first caching avoids redundant API calls across users
+
+### 4. Real-Time Progress
+- WebSocket pushes live stage updates to the browser
+- No page refresh needed during pipeline execution
+
+---
+
+## 🤖 AI / ML Model Details
+
+| Component | Details |
+|-----------|---------|
+| **Model Type** | XGBoost (Extreme Gradient Boosting) |
+| **Training** | Python (`ml/train.py`), 25 wallet-level features |
+| **Runtime** | Node.js — reads exported `model.json` + `manifest.json` |
+| **Explainability** | SHAP (SHapley Additive exPlanations) per prediction |
+| **Fallback** | Rule-based heuristic engine if model artifacts missing |
+| **Integrity** | SHA-256 hash of model artifacts verified at startup |
+| **Drift Detection** | Prediction distribution compared to training baseline |
+
+Features include: transaction frequency, avg amount, mixer interaction count, bridge usage, rapid forwarding ratio, hop distance from reported address, inflow/outflow ratio, VASP proximity score, and more.
+
+---
+
+## 🔐 Concurrent User Handling
+
+The system is designed for **multiple simultaneous investigators**:
+
+1. **`ON CONFLICT DO NOTHING`** — All transaction INSERTs use TypeORM `.orIgnore()` which translates to PostgreSQL's `INSERT ... ON CONFLICT DO NOTHING`. If two investigators scan the same wallet at the same time, only the first write succeeds; the second is discarded silently.
+
+2. **Database-First Cache** — Before calling any external API, the system checks if transactions already exist in the local PostgreSQL index. If they do, they're served immediately without any API call. This eliminates race conditions on rate-limited APIs.
+
+3. **BullMQ Job Isolation** — Each investigation runs as an independent background job in the queue. Jobs don't share state, so one investigation failing does not affect another.
+
+4. **TRON Address Normalization** — TRON addresses exist in two formats (Base58: `TXxx...` and Hex: `41xx...`). The system normalizes both to Base58 before storing, preventing duplicate records for the same wallet.
+
+---
+
+## 📊 Compute Requirements
+
+| Scan Depth | Time | RAM | Notes |
+|------------|------|-----|-------|
+| 3 hops (fast) | ~50ms | ~10MB | Good for quick initial scans |
+| 5 hops (standard) | ~300ms | ~50MB | Default for most cases |
+| 10 hops (deep) | ~2-5s | ~200MB | Serious fraud syndicate analysis |
+| 25 hops (extended) | ~30s | ~1GB | Complex money-mule networks |
+| 50 hops (max) | ~2-5min | ~4GB | Full syndicate mapping |
+
+**Hops Growth Formula:** If a wallet has `N` average transactions, depth `D` hops inspects up to `N^D` paths. Smart pruning, minimum amount filters, and VASP auto-stop keep this tractable in practice.
+
+---
+
+## 📁 Project Scripts
+
+```bash
+pnpm dev              # Start all services in parallel (watch mode)
+pnpm build            # Build all packages for production
+pnpm test             # Run all tests
+pnpm lint             # Lint all packages
+
+# API specific
+pnpm --filter @chainsentinel/api db:migrate   # Run DB migrations
+pnpm --filter @chainsentinel/api db:seed      # Seed default data
+pnpm --filter @chainsentinel/api db:admin     # Create admin user interactively
+
+# Build individual apps
+pnpm --filter @chainsentinel/api build
+pnpm --filter @chainsentinel/web build
+```
+
+---
+
+## 🧪 Running Tests
+
+```bash
+# All tests
+pnpm test
+
+# API unit tests only
+pnpm --filter @chainsentinel/api test:unit
+
+# Web component tests
+pnpm --filter @chainsentinel/web test
+```
+
+---
+
+## 📜 License
+
+Built for SIH 2024, Problem Statement PS-26183, Ministry of Home Affairs — Indian Cyber Crime Coordination Centre (I4C).

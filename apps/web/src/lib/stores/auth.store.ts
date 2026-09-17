@@ -36,7 +36,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error: any) {
       const message = error.response?.data?.error?.message
         || error.response?.data?.message
-        || 'Invalid email or password.';
+        || (error.code === 'ERR_NETWORK' || !error.response
+            ? 'Unable to connect to API server (port 3001). Please check if backend is running.'
+            : 'Invalid email or password.');
       set({ error: message, isLoading: false });
       throw error;
     }

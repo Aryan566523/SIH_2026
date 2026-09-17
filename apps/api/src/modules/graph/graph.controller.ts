@@ -22,6 +22,7 @@ export class GraphController {
   async traceAddress(
     @Query('address') address: string,
     @Query('blockchain') blockchain?: string,
+    @Query('depth') depth?: string,
   ) {
     if (!address) return { nodes: [], edges: [] };
 
@@ -33,12 +34,18 @@ export class GraphController {
       else chain = BlockchainType.ETHEREUM;
     }
 
+    const depthNum = parseInt(depth || '2', 10) || 2;
+
     // First try to build from real DB transactions
-    const dbGraph = await this.graphService.buildGraphForAddress(address, chain);
+    const dbGraph = await this.graphService.buildGraphForAddress(address, chain, depthNum);
 
     if (dbGraph.nodes.length > 1) {
-      // We have real data — return it
-      return dbGraph;
+      // Ensure edges have token for UI rendering
+      const enrichedEdges = dbGraph.edges.map((e: any) => ({
+        ...e,
+        token: e.token || e.asset || 'ETH',
+      }));
+      return { ...dbGraph, edges: enrichedEdges, dataSource: 'DATABASE', providerName: 'Postgres Cache' };
     }
 
     // No DB data yet — fetch live from the configured provider and build in-memory graph
@@ -111,24 +118,43 @@ export class GraphController {
   private guessLabel(address: string): string {
     const lower = address.toLowerCase();
     if (lower === '0x267be1c1d684f78cb4f6a176c4911b741e4ffdc0') return 'WazirX Hot Wallet';
-    if (lower === '0x28c6c06298d514db089934071355e5743bf21d60') return 'Binance Cold Wallet';
+    if (lower === '0x28c6c06298d514db089934071355e5743bf21d60') return 'Binance Cold Storage (14)';
     if (lower === 'tn3w4h6rk2ce4vx9ynfqhwkennhjoxbyz7'.toLowerCase()) return 'Binance TRON Hot Wallet';
     if (lower === 'txn3hvukebhyyr31ypcyd7ajavmuexu1ab'.toLowerCase()) return 'Shelbit Exchange (OFAC SDN)';
-    if (lower === '19d8phbjzh29us1upz4m3svyqqff8ufg9o'.toLowerCase()) return 'IRGC High-Risk Cluster';
+    if (lower === '19d8phbjzh29us1upz4m3svyqqff8ufg9o'.toLowerCase()) return 'IRGC Cyber Unit Cluster';
+    if (lower === '1ne2nighhbkfpseynwwj7hkghgdedbtsrq'.toLowerCase()) return 'OFAC Sanctioned Ransomware Address';
+    if (lower === '1feexv6bxk2vp1xfn5v3hel54qhq818fdf'.toLowerCase()) return 'Mt. Gox Exploiter Wallet';
     if (lower === '34xp4vrocgjym3xr7ycvpfhocnxv4twseo'.toLowerCase()) return 'Binance BTC Cold Storage';
-    if (lower.includes('tornado')) return 'Tornado Cash Mixer';
-    if (lower.includes('uniswap')) return 'Uniswap V3 DEX';
-    if (lower.includes('thor')) return 'THORChain Bridge';
+    if (lower === '0xd8da6bf26964af9d7eed9e03e53415d37aa96045') return 'Vitalik Buterin (vitalik.eth)';
+    if (lower === '0xdac17f958d2ee523a2206206994597c13d831ec7') return 'Tether USD (USDT) Contract';
+    if (lower === '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48') return 'USD Coin (USDC) Contract';
+    if (lower.includes('tornado') || lower === '0x8589427373d6d84e98730d7795d8f6f8731fda16' || lower === '0x722122df12d45705f05842c392bb55e76144aefa') return 'Tornado Cash Mixer';
+    if (lower.includes('uniswap') || lower === '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45' || lower === '0xe592427a0aece92de3edee1f18e0157c05861564') return 'Uniswap V3 Router';
+    if (lower.includes('thor') || lower === '0x39aC22b2063B9c64A4fC2d00b26cCcC5271Bd31B'.toLowerCase()) return 'THORChain / Axelar Bridge';
+    if (lower.includes('stargate') || lower === '0xdf0770df86a8034b3efef0a1bb3c889b8332ff56'.toLowerCase()) return 'Stargate / LayerZero Bridge';
+    if (lower.includes('lido') || lower === '0xae7ab96520de3a18e5e111b5eaab095312d7fe84') return 'Lido Staked ETH Pool';
+    if (lower.includes('foundry') || lower.includes('antpool') || lower.includes('f2pool')) return 'Mining Pool Operator';
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   }
 
   private guessType(address: string): string {
     const lower = address.toLowerCase();
-    if (lower === '0x267be1c1d684f78cb4f6a176c4911b741e4ffdc0' || lower === '0x28c6c06298d514db089934071355e5743bf21d60' || lower === 'tn3w4h6rk2ce4vx9ynfqhwkennhjoxbyz7'.toLowerCase() || lower === '34xp4vrocgjym3xr7ycvpfhocnxv4twseo'.toLowerCase()) return 'exchange';
-    if (lower === 'txn3hvukebhyyr31ypcyd7ajavmuexu1ab'.toLowerCase() || lower === '19d8phbjzh29us1upz4m3svyqqff8ufg9o'.toLowerCase()) return 'high_risk';
-    if (lower.includes('tornado')) return 'mixer';
-    if (lower.includes('uniswap')) return 'dex';
-    if (lower.includes('thor')) return 'bridge';
+    if (
+      lower === '0x267be1c1d684f78cb4f6a176c4911b741e4ffdc0' ||
+      lower === '0x28c6c06298d514db089934071355e5743bf21d60' ||
+      lower === 'tn3w4h6rk2ce4vx9ynfqhwkennhjoxbyz7'.toLowerCase() ||
+      lower === '34xp4vrocgjym3xr7ycvpfhocnxv4twseo'.toLowerCase()
+    ) return 'exchange';
+    if (
+      lower === 'txn3hvukebhyyr31ypcyd7ajavmuexu1ab'.toLowerCase() ||
+      lower === '19d8phbjzh29us1upz4m3svyqqff8ufg9o'.toLowerCase() ||
+      lower === '1ne2nighhbkfpseynwwj7hkghgdedbtsrq'.toLowerCase() ||
+      lower === '1feexv6bxk2vp1xfn5v3hel54qhq818fdf'.toLowerCase()
+    ) return 'high_risk';
+    if (lower.includes('tornado') || lower === '0x8589427373d6d84e98730d7795d8f6f8731fda16' || lower === '0x722122df12d45705f05842c392bb55e76144aefa') return 'mixer';
+    if (lower.includes('uniswap') || lower === '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45' || lower === '0xe592427a0aece92de3edee1f18e0157c05861564') return 'dex';
+    if (lower.includes('thor') || lower.includes('stargate') || lower.includes('bridge') || lower === '0x39aC22b2063B9c64A4fC2d00b26cCcC5271Bd31B'.toLowerCase()) return 'bridge';
+    if (lower.includes('lido') || lower.includes('validator') || lower.includes('miner') || lower.includes('pool')) return 'miner';
     return 'wallet';
   }
 }

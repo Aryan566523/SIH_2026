@@ -966,9 +966,61 @@ export default function LoginPage() {
             </button>
           </form>
 
+          {/* Quick Demo Access */}
+          <div className="mt-5 pt-4" style={{ borderTop: `1px dashed ${isDark ? 'rgba(0, 240, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)'}` }}>
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-[11px] font-mono uppercase tracking-wider font-semibold" style={{ color: isDark ? '#00f0ff' : '#0891b2' }}>
+                ⚡ Quick Demo Access
+              </span>
+              <span className="text-[10px] font-mono" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
+                1-Click Autofill
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@sih.com');
+                  setPassword('Admin@123');
+                  setEmailError(null);
+                  setPasswordError(null);
+                  clearError();
+                }}
+                className="text-left p-2 rounded-lg border text-xs transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
+                style={{
+                  background: isDark ? 'rgba(0, 240, 255, 0.05)' : 'rgba(8, 145, 178, 0.05)',
+                  borderColor: isDark ? 'rgba(0, 240, 255, 0.2)' : 'rgba(8, 145, 178, 0.2)',
+                  color: isDark ? '#cbd5e1' : '#334155',
+                }}
+              >
+                <div className="font-semibold text-[11px]" style={{ color: isDark ? '#00f0ff' : '#0891b2' }}>Super Admin</div>
+                <div className="font-mono text-[10px] opacity-75 truncate">admin@sih.com</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('investigator@chainsentinel.gov.in');
+                  setPassword('ChangeMeImmediately!');
+                  setEmailError(null);
+                  setPasswordError(null);
+                  clearError();
+                }}
+                className="text-left p-2 rounded-lg border text-xs transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
+                style={{
+                  background: isDark ? 'rgba(139, 92, 246, 0.05)' : 'rgba(124, 58, 237, 0.05)',
+                  borderColor: isDark ? 'rgba(139, 92, 246, 0.2)' : 'rgba(124, 58, 237, 0.2)',
+                  color: isDark ? '#cbd5e1' : '#334155',
+                }}
+              >
+                <div className="font-semibold text-[11px]" style={{ color: isDark ? '#a78bfa' : '#7c3aed' }}>Investigator</div>
+                <div className="font-mono text-[10px] opacity-75 truncate">investigator@...</div>
+              </button>
+            </div>
+          </div>
+
           {/* Security Status */}
           <div
-            className="mt-6 pt-4"
+            className="mt-4 pt-3"
             style={{ borderTop: `1px solid ${isDark ? 'rgba(42, 48, 74, 0.8)' : 'rgba(0, 0, 0, 0.06)'}` }}
           >
             <div

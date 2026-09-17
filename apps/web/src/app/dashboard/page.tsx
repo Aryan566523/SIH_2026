@@ -246,35 +246,35 @@ export default function CommandCenter() {
           </div>
         </motion.div>
 
-        {/* Live Feed */}
+        {/* Quick Actions */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-panel rounded-xl p-5">
           <h3 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: isDark ? '#ffffff' : '#101318' }}>
-            <div className="w-2 h-2 rounded-full bg-neon-green animate-pulse" />
-            Live Investigation Feed
+            <ArrowUpRight className="w-4 h-4" style={{ color: isDark ? '#00f0ff' : '#0891b2' }} />
+            Quick Actions
           </h3>
-          <div className="space-y-3 max-h-[300px] overflow-y-auto">
-            {loading ? (
-              [1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-6 rounded" />)
-            ) : feed.length === 0 ? (
-              <div className="text-center py-8">
-                <Activity className="w-8 h-8 mx-auto mb-2" style={{ color: isDark ? '#475569' : '#94a3b8' }} />
-                <p className="text-xs" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>No recent activity</p>
-              </div>
-            ) : (
-              feed.map((item, i) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 + i * 0.05 }}
-                  className={cn('flex gap-3 text-xs cursor-pointer hover:opacity-80 transition-opacity')}
-                  onClick={() => item.href && router.push(item.href)}
-                >
-                  <span className="font-mono w-20 flex-shrink-0" style={{ color: isDark ? '#475569' : '#94a3b8' }}>{item.time}</span>
-                  <span className={cn('flex-1', feedTypeColors[item.type])}>{item.message}</span>
-                </motion.div>
-              ))
-            )}
+          <div className="space-y-2">
+            {([
+              { label: 'New Investigation', href: '/dashboard/new-investigation', color: isDark ? 'rgba(0,240,255,0.1)' : 'rgba(0,150,180,0.08)', border: isDark ? 'rgba(0,240,255,0.3)' : 'rgba(0,150,180,0.25)', text: isDark ? '#00f0ff' : '#0891b2' },
+              { label: 'View All Alerts', href: '/dashboard/alerts', color: isDark ? 'rgba(239,68,68,0.1)' : 'rgba(220,38,38,0.06)', border: isDark ? 'rgba(239,68,68,0.3)' : 'rgba(220,38,38,0.2)', text: isDark ? '#f87171' : '#dc2626' },
+              { label: 'Transaction Graph', href: '/dashboard/graph', color: isDark ? 'rgba(167,139,250,0.1)' : 'rgba(124,58,237,0.06)', border: isDark ? 'rgba(167,139,250,0.3)' : 'rgba(124,58,237,0.2)', text: isDark ? '#a78bfa' : '#7c3aed' },
+              { label: 'VASP Directory', href: '/dashboard/vasp', color: isDark ? 'rgba(52,211,153,0.1)' : 'rgba(5,150,105,0.06)', border: isDark ? 'rgba(52,211,153,0.3)' : 'rgba(5,150,105,0.2)', text: isDark ? '#34d399' : '#059669' },
+              { label: 'Watchlist Monitor', href: '/dashboard/watchlist', color: isDark ? 'rgba(251,191,36,0.1)' : 'rgba(217,119,6,0.06)', border: isDark ? 'rgba(251,191,36,0.3)' : 'rgba(217,119,6,0.2)', text: isDark ? '#fbbf24' : '#d97706' },
+              { label: 'Investigation Reports', href: '/dashboard/reports', color: isDark ? 'rgba(96,165,250,0.1)' : 'rgba(37,99,235,0.06)', border: isDark ? 'rgba(96,165,250,0.3)' : 'rgba(37,99,235,0.2)', text: isDark ? '#60a5fa' : '#2563eb' },
+            ] as any[]).map((action: any) => (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{
+                  background: action.color,
+                  border: `1px solid ${action.border}`,
+                  color: action.text,
+                }}
+              >
+                <span>{action.label}</span>
+                <ArrowUpRight className="w-3.5 h-3.5 opacity-70" />
+              </Link>
+            ))}
           </div>
         </motion.div>
       </div>

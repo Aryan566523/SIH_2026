@@ -19,12 +19,24 @@ export function formatNumber(num: number): string {
 
 export function formatAmount(amount: string | number, decimals: number = 2): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  if (isNaN(num)) return '0';
+  if (isNaN(num) || num === 0) return '0';
+
+  // For very small crypto amounts (e.g. 0.000045 ETH), dynamic precision prevents showing 0.00
+  let maxDecimals = decimals;
+  if (Math.abs(num) < 0.0001) {
+    maxDecimals = 8;
+  } else if (Math.abs(num) < 0.01) {
+    maxDecimals = 6;
+  } else if (Math.abs(num) < 1) {
+    maxDecimals = 4;
+  }
+
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
-    maximumFractionDigits: decimals,
+    maximumFractionDigits: maxDecimals,
   }).format(num);
 }
+
 
 export function formatDate(date: string | Date): string {
   return new Date(date).toLocaleDateString('en-US', {

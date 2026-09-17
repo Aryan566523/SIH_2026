@@ -2,7 +2,7 @@
   Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { BlockchainType, RiskLevel } from '@chainsentinel/types';
+import { BlockchainType, RiskLevel, NodeKind } from '@chainsentinel/types';
 
 @Entity('wallets')
 @Index(['address', 'blockchain'], { unique: true })
@@ -33,6 +33,17 @@ export class Wallet {
 
   @Column({ default: false, name: 'is_on_watchlist' })
   isOnWatchlist: boolean;
+
+  /** RULES §2: wallet facts vs service attribution vs block-producer infrastructure are separate node types */
+  @Column({ type: 'simple-enum', enum: NodeKind, default: NodeKind.WALLET, name: 'node_kind' })
+  nodeKind: NodeKind;
+
+  /** Only meaningful when nodeKind = INFRA: miner/validator/pool under escalation review (CONDITIONS 2.2-2.7) */
+  @Column({ default: false, name: 'infra_escalated' })
+  infraEscalated: boolean;
+
+  @Column({ type: 'text', nullable: true, name: 'escalation_reason' })
+  escalationReason: string | null;
 
   @Column({ type: 'decimal', precision: 20, scale: 8, default: 0, name: 'total_received' })
   totalReceived: string;

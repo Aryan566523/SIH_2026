@@ -53,6 +53,13 @@ export class InvestigationsController {
     return { success: true, data: jobs };
   }
 
+  @Post(':id/run')
+  @ApiOperation({ summary: 'Run or resume an investigation (checkpointed, non-blocking)' })
+  async run(@Param('id') id: string) {
+    const inv = await this.invService.runOrResume(id);
+    return { success: true, data: inv };
+  }
+
   @Get('case/:caseId')
   @ApiOperation({ summary: 'Get investigations for a case' })
   async findByCase(@Param('caseId') caseId: string) {

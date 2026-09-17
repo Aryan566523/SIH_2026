@@ -1,0 +1,321 @@
+{
+  "model_version": "xgb-wallet-v1",
+  "model_type": "xgboost_binary_logistic",
+  "trained_at": "2026-09-14T11:41:55.013007+00:00",
+  "model_sha256": "abde6b9fd35714a3261ef10976a4eed33606aaee8e6bdaa219e9623671fd9084",
+  "objective": "binary:logistic",
+  "n_trees": 96,
+  "features": [
+    {
+      "name": "tx_count",
+      "group": "transaction",
+      "desc": "Total number of transactions"
+    },
+    {
+      "name": "log_amount_received_total",
+      "group": "transaction",
+      "desc": "log10(1 + total amount received)"
+    },
+    {
+      "name": "log_amount_sent_total",
+      "group": "transaction",
+      "desc": "log10(1 + total amount sent)"
+    },
+    {
+      "name": "unique_senders",
+      "group": "transaction",
+      "desc": "Unique counterparties that sent funds"
+    },
+    {
+      "name": "unique_receivers",
+      "group": "transaction",
+      "desc": "Unique counterparties that received funds"
+    },
+    {
+      "name": "log_max_amount",
+      "group": "transaction",
+      "desc": "log10(1 + largest single transaction)"
+    },
+    {
+      "name": "avg_holding_min",
+      "group": "behavior",
+      "desc": "log10(1 + mean receive->send gap in minutes)"
+    },
+    {
+      "name": "median_holding_min",
+      "group": "behavior",
+      "desc": "log10(1 + median receive->send gap in minutes)"
+    },
+    {
+      "name": "forwarding_ratio",
+      "group": "behavior",
+      "desc": "total sent / total received (clipped 0..100)"
+    },
+    {
+      "name": "activity_frequency",
+      "group": "behavior",
+      "desc": "transactions per active day"
+    },
+    {
+      "name": "fan_in_ratio",
+      "group": "behavior",
+      "desc": "unique senders / received count"
+    },
+    {
+      "name": "fan_out_ratio",
+      "group": "behavior",
+      "desc": "unique receivers / sent count"
+    },
+    {
+      "name": "velocity_24h",
+      "group": "behavior",
+      "desc": "max tx in any 24h window / total tx"
+    },
+    {
+      "name": "vasp_proximity",
+      "group": "graph",
+      "desc": "1 if a direct counterparty is a known VASP, else 3 (clipped)"
+    },
+    {
+      "name": "mixer_interaction",
+      "group": "graph",
+      "desc": "1 if any counterparty is a known mixer"
+    },
+    {
+      "name": "bridge_interaction",
+      "group": "graph",
+      "desc": "1 if any counterparty is a known bridge contract"
+    },
+    {
+      "name": "sanctioned_match",
+      "group": "graph",
+      "desc": "1 if wallet or counterparty matches a sanctioned list"
+    },
+    {
+      "name": "distance_from_report",
+      "group": "graph",
+      "desc": "hop distance from the reported suspect wallet (0 = suspect)"
+    },
+    {
+      "name": "rapid_forwarding_count",
+      "group": "flow",
+      "desc": "receive->send events within 30 minutes"
+    },
+    {
+      "name": "fund_split_count",
+      "group": "flow",
+      "desc": "fan-out events (3+ unique receivers in 10 min)"
+    },
+    {
+      "name": "fund_merge_count",
+      "group": "flow",
+      "desc": "fan-in events (3+ unique senders in 10 min)"
+    },
+    {
+      "name": "min_receive_send_gap_min",
+      "group": "flow",
+      "desc": "log10(1 + minimum receive->send gap in minutes)"
+    },
+    {
+      "name": "cross_chain_count",
+      "group": "flow",
+      "desc": "transactions touching more than one chain"
+    },
+    {
+      "name": "wallet_age_days",
+      "group": "flow",
+      "desc": "log10(1 + days between first seen and assessment)"
+    },
+    {
+      "name": "amount_concentration",
+      "group": "flow",
+      "desc": "max amount / (median amount + 1) \u2014 peel-chain signal"
+    }
+  ],
+  "feature_minmax": {
+    "tx_count": [
+      4.0,
+      23.0
+    ],
+    "log_amount_received_total": [
+      2.8138144174810424,
+      5.41459658446089
+    ],
+    "log_amount_sent_total": [
+      2.4951001032850804,
+      5.661225247653236
+    ],
+    "unique_senders": [
+      1.0,
+      9.0
+    ],
+    "unique_receivers": [
+      1.0,
+      21.0
+    ],
+    "log_max_amount": [
+      2.5459006177292234,
+      5.000004342923105
+    ],
+    "avg_holding_min": [
+      0.904895787855206,
+      4.459407567166948
+    ],
+    "median_holding_min": [
+      0.793557581425044,
+      4.459407567166948
+    ],
+    "forwarding_ratio": [
+      0.015584,
+      4.773855485422828
+    ],
+    "activity_frequency": [
+      0.03030907539312344,
+      14.0
+    ],
+    "fan_in_ratio": [
+      0.16666666666666666,
+      1.0
+    ],
+    "fan_out_ratio": [
+      0.16666666666666666,
+      1.0
+    ],
+    "velocity_24h": [
+      0.08333333333333333,
+      1.0
+    ],
+    "vasp_proximity": [
+      1.0,
+      3.0
+    ],
+    "mixer_interaction": [
+      0.0,
+      1.0
+    ],
+    "bridge_interaction": [
+      0.0,
+      1.0
+    ],
+    "sanctioned_match": [
+      0.0,
+      0.0
+    ],
+    "distance_from_report": [
+      0.0,
+      3.0
+    ],
+    "rapid_forwarding_count": [
+      0.0,
+      8.0
+    ],
+    "fund_split_count": [
+      0.0,
+      5.0
+    ],
+    "fund_merge_count": [
+      0.0,
+      4.0
+    ],
+    "min_receive_send_gap_min": [
+      0.17609125905568124,
+      4.459407567166948
+    ],
+    "cross_chain_count": [
+      0.0,
+      0.0
+    ],
+    "wallet_age_days": [
+      0.3137207911281077,
+      2.307496037913213
+    ],
+    "amount_concentration": [
+      1.0519826717414311,
+      1338.5089010841923
+    ]
+  },
+  "confidence_threshold": 0.6,
+  "min_feature_support_txs": 3,
+  "metric_gates": {
+    "roc_auc": 0.85,
+    "f1": 0.7,
+    "precision": 0.7,
+    "recall": 0.7,
+    "false_positive_rate": 0.15,
+    "ece": 0.1
+  },
+  "metrics": {
+    "train": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "false_positive_rate": 0.0,
+      "ece": 0.0018,
+      "n": 2772,
+      "positive_rate": 0.3387
+    },
+    "validation": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "false_positive_rate": 0.0,
+      "ece": 0.0019,
+      "n": 631,
+      "positive_rate": 0.4073
+    },
+    "test": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "false_positive_rate": 0.0,
+      "ece": 0.0018,
+      "n": 597,
+      "positive_rate": 0.3417
+    }
+  },
+  "expected_prob_mean": 0.338759,
+  "split": {
+    "method": "by case_id, ordered chronologically by first_seen (wallet/case/time)",
+    "train": 2772,
+    "validation": 631,
+    "test": 597
+  },
+  "data_provenance": {
+    "synthetic": {
+      "n_wallets": 4000,
+      "n_fraud": 1400,
+      "n_legit": 2600,
+      "labeled": true,
+      "is_synthetic": true,
+      "patterns": [
+        "bridge_hop",
+        "direct_theft",
+        "exchange_cashout",
+        "exchange_user",
+        "fan_in",
+        "fan_out",
+        "mixer_entry",
+        "multi_victim",
+        "p2p_transfers",
+        "peel_chain",
+        "rapid_forwarding",
+        "salary_income",
+        "savings",
+        "shopping",
+        "split_merge"
+      ]
+    },
+    "elliptic": null
+  },
+  "label_definition": "1 = wallet participates in a known fraud-flow pattern (synthetic, clearly labeled); 0 = legitimate behavior",
+  "usage_limits": [
+    "AI output is prioritization, not a verdict (RULES \u00a70.3).",
+    "Every prediction ships with SHAP explanation + model version + model hash (condition 5.4).",
+    "Confidence < threshold => UNKNOWN classification (condition 5.1).",
+    "Insufficient transaction history => INSUFFICIENT_DATA (condition 5.2).",
+    "Infrastructure nodes (miner/validator) are never scored (condition 5.3)."
+  ]
+}

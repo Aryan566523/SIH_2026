@@ -108,6 +108,57 @@ export enum TransactionStatus {
   CONFIRMED = 'confirmed',
   PENDING = 'pending',
   FAILED = 'failed',
+  FINALIZED = 'finalized',
+}
+
+/** Independent cross-check state for critical blockchain facts (RULES §0.2 / CONDITIONS 1.1-1.3) */
+export enum VerificationStatus {
+  UNVERIFIED = 'unverified',
+  VERIFIED = 'verified',
+  CONFLICT = 'conflict',
+}
+
+/** Graph node kinds — wallet facts vs service attribution vs block-producer infrastructure (RULES §2) */
+export enum NodeKind {
+  WALLET = 'wallet',
+  SERVICE = 'service',
+  INFRA = 'infra',
+}
+
+/** Attribution confidence states — never a bare boolean (RULES §4) */
+export enum AttributionState {
+  CONFIRMED = 'Confirmed',
+  PROBABLE = 'Probable',
+  UNKNOWN = 'Unknown',
+}
+
+/** Whether an individual person was identified behind an address — custodial wallets NEVER are (RULES §11) */
+export enum IdentityAttribution {
+  NOT_DETERMINED = 'NOT_DETERMINED',
+  IDENTIFIED = 'IDENTIFIED',
+}
+
+/** AI risk classification — UNKNOWN is a required output when confidence is low (RULES §5 / CONDITIONS 5.1) */
+export enum RiskClassification {
+  HIGH_RISK = 'HIGH_RISK',
+  MEDIUM_RISK = 'MEDIUM_RISK',
+  LOW_RISK = 'LOW_RISK',
+  UNKNOWN = 'UNKNOWN',
+  INSUFFICIENT_DATA = 'INSUFFICIENT_DATA',
+}
+
+/** Why a trace stopped expanding on a branch (CONDITIONS 3.2/3.8) */
+export enum TraceStopReason {
+  MIXER_BOUNDARY = 'MIXER_BOUNDARY',
+  VASP_TERMINAL = 'VASP_TERMINAL',
+  MAX_DEPTH = 'MAX_DEPTH',
+  MAX_NODES = 'MAX_NODES',
+  MAX_BRANCHES = 'MAX_BRANCHES',
+  MIN_AMOUNT = 'MIN_AMOUNT',
+  TIME_WINDOW = 'TIME_WINDOW',
+  RUNTIME_LIMIT = 'RUNTIME_LIMIT',
+  ALREADY_VISITED = 'ALREADY_VISITED',
+  NO_OUTGOING = 'NO_OUTGOING',
 }
 
 // ---- User & Auth ----
@@ -333,7 +384,8 @@ export interface InvestigationJob {
 
 export interface GraphNode {
   id: string;
-  type: 'victim' | 'suspect' | 'wallet' | 'burner' | 'exchange' | 'vasp' | 'dex' | 'bridge' | 'mixer' | 'contract' | 'high_risk' | 'unknown';
+  type: 'victim' | 'suspect' | 'wallet' | 'burner' | 'exchange' | 'vasp' | 'dex' | 'bridge' | 'mixer' | 'contract' | 'high_risk' | 'infra' | 'unknown';
+  nodeKind?: NodeKind;
   label: string;
   address?: string;
   blockchain?: BlockchainType;
@@ -372,7 +424,7 @@ export interface GraphData {
 export interface VASP {
   id: string;
   name: string;
-  type: 'centralized_exchange' | 'decentralized_exchange' | 'bridge' | 'mixer' | 'payment_service' | 'gambling' | 'merchant' | 'protocol' | 'unknown';
+  type: 'centralized_exchange' | 'decentralized_exchange' | 'bridge' | 'mixer' | 'payment_service' | 'gambling' | 'merchant' | 'protocol' | 'miner_pool' | 'unknown';
   wallets: string[];
   chains: BlockchainType[];
   jurisdiction: string | null;
@@ -675,4 +727,116 @@ export interface ServiceStatus {
 export interface InvestigationRecommendation {
   priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   recommendations: string[];
+}
+
+// ============================================================
+// CryptoTrace AI — Verification, Evidence & Bounded Tracing
+// ============================================================
+
+/** Metadata about which provider/node a fact came from and when it was collected (RULES §1) */
+export interface VerificationSource {
+  name: string;
+  kind: 'own_node' | 'independent_rpc' | 'indexer' | 'cache' | 'mock';
+  agreed: boolean;
+  collectedAt: string;
+  latencyMs?: number;
+  detail?: string;
+}
+
+export interface VerificationResult {
+  status: VerificationStatus;
+  sources: VerificationSource[];
+  checkedAt: string;
+  detail?: string;
+}
+
+/** Block-producer metadata tagged on every ingested tx/block (RULES §2) */
+export interface ProducerMetadata {
+  producerAddress: string | null;
+  producerType: 'miner' | 'validator' | 'pool' | null;
+  consensusMetadata: Record<string, unknown> | null;
+}
+
+/** Block-anchored historical balance — bare "current balance" is insufficient (RULES §1) */
+export interface HistoricalBalance {
+  address: string;
+  chain: BlockchainType;
+  asset: string;
+  amount: string;
+  blockNumber: number;
+  blockHash: string | null;
+  queriedAt: string;
+  supportingTransactions: string[];
+  verification: VerificationResult;
+}
+
+/** Explicit boundary marker when a trace enters a mixer/privacy service (RULES §3) */
+export interface TraceBoundary {
+  nodeAddress: string;
+  reason: TraceStopReason;
+  label: string | null;
+  atDepth: number;
+  confidenceReduction: number;
+  message: string;
+}
+
+/** Bounded priority traversal options — brute-force expansion is prohibited (RULES §3) */
+export interface BoundedTraceOptions {
+  maxDepth: number;
+  maxNodes: number;
+  maxBranchesPerNode: number;
+  minAmount: number;
+  timeWindowHours: number;
+  maxRuntimeMs: number;
+}
+
+export interface BoundedTraceResult {
+  startAddress: string;
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  visitedCount: number;
+  prunedCount: number;
+  boundaries: TraceBoundary[];
+  incomplete: boolean;
+  incompleteReason: TraceStopReason | null;
+  runtimeMs: number;
+}
+
+/** Explainable factor attached to every prediction (RULES §5, SHAP-equivalent) */
+export interface RiskExplanationFactor {
+  feature: string;
+  contribution: number;
+  value: string;
+}
+
+/** Canonical evidence object — hashed and signed before storage (RULES §6 / CONDITIONS 6.x) */
+export interface EvidenceRecord {
+  id: string;
+  caseId: string | null;
+  investigationId: string | null;
+  walletId: string | null;
+  kind: 'transaction' | 'attribution' | 'risk_assessment' | 'graph_snapshot' | 'balance' | 'report';
+  refId: string | null;
+  payload: Record<string, unknown>;
+  canonicalForm: string;
+  sha256Hash: string;
+  signature: string;
+  version: number;
+  previousVersionId: string | null;
+  supersededBy: string | null;
+  status: 'active' | 'superseded' | 'tamper_suspected';
+  softwareVersion: string;
+  collectedAt: string;
+  createdBy: string | null;
+  approvedBy: string | null;
+  createdAt: string;
+}
+
+export interface EvidenceVerificationOutcome {
+  evidenceId: string;
+  valid: boolean;
+  expectedHash: string;
+  actualHash: string;
+  signatureValid: boolean;
+  status: 'active' | 'superseded' | 'tamper_suspected';
 }

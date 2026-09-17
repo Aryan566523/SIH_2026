@@ -6,6 +6,7 @@ import { Bell, AlertTriangle, AlertCircle, Info, CheckCircle, Eye, Shield } from
 import { alertsApi } from '@/lib/api';
 import { cn, getSeverityColor, formatDateTime, timeAgo } from '@/lib/utils';
 import { useThemeStore } from '@/lib/stores/theme.store';
+import { AlertDetailModal } from '@/components/AlertDetailModal';
 
 const severityIcons: Record<string, any> = {
   CRITICAL: AlertTriangle,
@@ -19,6 +20,7 @@ export default function AlertsPage() {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const [selectedAlert, setSelectedAlert] = useState<any | null>(null);
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
 
@@ -120,7 +122,10 @@ export default function AlertsPage() {
                   alert.severity === 'CRITICAL' && alert.status === 'UNREAD' && 'border-l-red-500',
                   alert.severity === 'HIGH' && alert.status === 'UNREAD' && 'border-l-orange-500',
                 )}
-                onClick={() => handleMarkRead(alert.id)}
+                onClick={() => {
+                  handleMarkRead(alert.id);
+                  setSelectedAlert(alert);
+                }}
               >
                 <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 border', getSeverityColor(alert.severity))}>
                   <Icon className="w-5 h-5" />
@@ -149,6 +154,14 @@ export default function AlertsPage() {
           })}
         </div>
       )}
+
+      {/* Full Alert Details Modal */}
+      <AlertDetailModal
+        isOpen={!!selectedAlert}
+        onClose={() => setSelectedAlert(null)}
+        alert={selectedAlert}
+        onMarkRead={(id) => handleMarkRead(id)}
+      />
     </div>
   );
 }

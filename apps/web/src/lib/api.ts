@@ -97,6 +97,7 @@ export const investigationsApi = {
   list: (params?: any) => api.get('/investigations', { params }),
   get: (id: string) => api.get(`/investigations/${id}`),
   create: (data: any) => api.post('/investigations', data),
+  resume: (id: string) => api.post(`/investigations/${id}/resume`),
   getJobs: (id: string) => api.get(`/investigations/${id}/jobs`),
   getStats: () => api.get('/investigations/stats'),
   generateReportPdf: (id: string) =>

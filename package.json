@@ -22,6 +22,11 @@
     "db:seed": "pnpm --filter @chainsentinel/api run db:seed",
     "db:admin": "pnpm --filter @chainsentinel/api run db:admin",
     "db:reset": "pnpm --filter @chainsentinel/api run db:reset",
+    "ml:setup": "python ml/setup_and_train.py",
+    "ml:train": "python ml/train.py",
+    "ml:evaluate": "python ml/evaluate.py",
+    "ml:download": "python ml/download_data.py",
+    "ml:test": "python -m pytest ml/tests -q",
     "clean": "pnpm --parallel -r run clean"
   },
   "engines": {

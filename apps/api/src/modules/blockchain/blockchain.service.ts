@@ -143,8 +143,18 @@ export class BlockchainService {
         // Upsert - check if exists
         const existing = await this.txRepo.findOne({ where: { txHash: normalizedTx.txHash } });
         if (!existing) {
-          const saved = await this.txRepo.save(this.txRepo.create(normalizedTx));
-          normalized.push(saved);
+          try {
+            await this.txRepo.createQueryBuilder()
+              .insert()
+              .into(NormalizedTransaction)
+              .values(normalizedTx as any)
+              .orIgnore()
+              .execute();
+            const saved = await this.txRepo.findOne({ where: { txHash: normalizedTx.txHash } });
+            if (saved) normalized.push(saved);
+          } catch {
+            // Ignore duplicate key collision safely
+          }
         }
       }
     }

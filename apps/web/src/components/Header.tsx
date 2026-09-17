@@ -10,6 +10,7 @@ import { useUIStore } from '@/lib/stores/ui.store';
 import { alertsApi, searchApi } from '@/lib/api';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { timeAgo } from '@/lib/utils';
+import { AlertDetailModal } from '@/components/AlertDetailModal';
 
 // Shared alert store - singleton pattern via module scope
 let _unreadCount = 0;
@@ -78,6 +79,7 @@ export const Header = memo(function Header() {
   const [showSearch, setShowSearch] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notifLoading, setNotifLoading] = useState(false);
+  const [selectedAlert, setSelectedAlert] = useState<any | null>(null);
   const unreadCount = useUnreadAlerts();
 
   const isDark = theme === 'dark';
@@ -161,14 +163,14 @@ export const Header = memo(function Header() {
   }, [notifications]);
 
   const handleNotifClick = useCallback(async (notif: any) => {
+    setSelectedAlert(notif);
     if (notif.status === 'UNREAD') {
       try { await alertsApi.markRead(notif.id); } catch { /* ignore */ }
       setNotifications((prev) => prev.map((n: any) => n.id === notif.id ? { ...n, status: 'READ' } : n));
       setUnreadCountGlobal(Math.max(0, getUnreadCount() - 1));
     }
     setShowNotifications(false);
-    router.push('/dashboard/alerts');
-  }, [router]);
+  }, []);
 
   const notifTypeIcon = (severity: string) => {
     const colors: Record<string, string> = {
@@ -445,6 +447,17 @@ export const Header = memo(function Header() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Notification Detail Modal */}
+      <AlertDetailModal
+        isOpen={!!selectedAlert}
+        onClose={() => setSelectedAlert(null)}
+        alert={selectedAlert}
+        onMarkRead={(id) => {
+          setNotifications((prev) => prev.map((n: any) => n.id === id ? { ...n, status: 'READ' } : n));
+          setUnreadCountGlobal(Math.max(0, getUnreadCount() - 1));
+        }}
+      />
     </header>
   );
 });

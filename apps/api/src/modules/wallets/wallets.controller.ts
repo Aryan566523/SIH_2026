@@ -39,9 +39,14 @@ export class WalletsController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('chain') chain?: string,
+    @Query('forceSync') forceSync?: string,
   ) {
+    const shouldSync = forceSync === 'true' || forceSync === '1';
     const result = await this.walletsService.getTransactions(address, {
-      page, limit, chain: chain as any,
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 50,
+      chain: chain as any,
+      forceSync: shouldSync,
     });
     return { success: true, ...result };
   }

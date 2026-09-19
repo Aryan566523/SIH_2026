@@ -1,0 +1,1129 @@
+<path>D:\Documents\SIH\26183\apps\web\src\app\dashboard\graph\page.tsx</path>
+<type>file</type>
+<content>
+1: 'use client';
+2: 
+3: import { useState, useCallback, useMemo, useEffect, Suspense } from 'react';
+4: import { motion, AnimatePresence } from 'framer-motion';
+5: import {
+6:   Search,
+7:   Info,
+8:   AlertTriangle,
+9:   RefreshCw,
+10:   Copy,
+11:   Check,
+12:   Wallet,
+13:   ArrowRight,
+14:   X,
+15:   Layers,
+16:   ArrowUpRight,
+17:   ArrowDownLeft,
+18:   GitBranch,
+19:   ArrowDownRight,
+20:   Compass,
+21:   Maximize2,
+22:   Crosshair,
+23:   Navigation,
+24:   Clock,
+25:   ExternalLink,
+26: } from 'lucide-react';
+27: import { useSearchParams } from 'next/navigation';
+28: import Link from 'next/link';
+29: import { formatAmount } from '@/lib/utils';
+30: import { useUIStore } from '@/lib/stores/ui.store';
+31: import { useThemeStore } from '@/lib/stores/theme.store';
+32: import ReactFlow, {
+33:   Background,
+34:   Controls,
+35:   MiniMap,
+36:   Edge,
+37:   Node,
+38:   Handle,
+39:   Position,
+40:   NodeProps,
+41:   EdgeProps,
+42:   MarkerType,
+43:   BaseEdge,
+44:   EdgeLabelRenderer,
+45:   getBezierPath,
+46:   ReactFlowProvider,
+47:   useReactFlow,
+48: } from 'reactflow';
+49: import 'reactflow/dist/style.css';
+50: 
+51: // ── Node type configuration ──────────────────────────────────────────────────
+52: const NODE_CONFIG: Record<string, { bg: string; border: string; label: string }> = {
+53:   suspect:   { bg: '#ff4d4f', border: '#ff1f23', label: 'SUSPECT' },
+54:   exchange:  { bg: '#7c3aed', border: '#6d28d9', label: 'EXCHANGE' },
+55:   vasp:      { bg: '#7c3aed', border: '#6d28d9', label: 'VASP' },
+56:   mixer:     { bg: '#f97316', border: '#ea580c', label: 'MIXER' },
+57:   bridge:    { bg: '#0891b2', border: '#0e7490', label: 'BRIDGE' },
+58:   dex:       { bg: '#059669', border: '#047857', label: 'DEX' },
+59:   miner:     { bg: '#3b82f6', border: '#1d4ed8', label: 'MINER / VALIDATOR' },
+60:   high_risk: { bg: '#dc2626', border: '#b91c1c', label: 'HIGH RISK' },
+61:   wallet:    { bg: '#1e293b', border: '#334155', label: 'WALLET' },
+62:   default:   { bg: '#1e293b', border: '#334155', label: 'WALLET' },
+63: };
+64: 
+65: // ── Custom Node Component with Direct Money Transferred Badge ────────────────
+66: function WalletNode({ data }: NodeProps) {
+67:   const cfg = NODE_CONFIG[data.nodeType] || NODE_CONFIG.default;
+68:   const isSuspect = data.nodeType === 'suspect' || data.isSuspect;
+69:   const [copied, setCopied] = useState(false);
+70: 
+71:   const onCopy = (e: React.MouseEvent) => {
+72:     e.stopPropagation();
+73:     const toCopy = data.address || data.label || '';
+74:     if (toCopy) {
+75:       navigator.clipboard.writeText(toCopy);
+76:       setCopied(true);
+77:       setTimeout(() => setCopied(false), 1800);
+78:     }
+79:   };
+80: 
+81:   const hasReceived = (data.receivedAmount || 0) > 0;
+82:   const hasSent = (data.sentAmount || 0) > 0;
+83: 
+84:   return (
+85:     <div
+86:       style={{
+87:         background: cfg.bg,
+88:         border: `2px solid ${cfg.border}`,
+89:         borderRadius: 10,
+90:         padding: '10px 14px',
+91:         minWidth: 165,
+92:         maxWidth: 220,
+93:         textAlign: 'center',
+94:         boxShadow: isSuspect ? `0 0 20px ${cfg.bg}aa` : '0 4px 14px rgba(0,0,0,0.5)',
+95:         position: 'relative',
+96:         cursor: 'pointer',
+97:         transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+98:       }}
+99:       className="hover:scale-105 hover:z-30"
+100:     >
+101:       <Handle type="target" position={Position.Left} style={{ background: cfg.border, width: 8, height: 8 }} />
+102:       
+103:       <div className="flex items-center justify-between gap-1 mb-1.5">
+104:         <span style={{ fontSize: 9, color: '#fffa', fontWeight: 800, letterSpacing: 0.8 }}>
+105:           {cfg.label}
+106:         </span>
+107:         <button
+108:           onClick={onCopy}
+109:           title="Copy address"
+110:           style={{
+111:             background: 'rgba(255,255,255,0.18)',
+112:             border: 'none',
+113:             borderRadius: 4,
+114:             padding: '2px 4px',
+115:             cursor: 'pointer',
+116:             display: 'flex',
+117:             alignItems: 'center',
+118:             justifyContent: 'center',
+119:             color: copied ? '#4ade80' : '#ffffff',
+120:           }}
+121:           className="hover:bg-white/30 transition-colors"
+122:         >
+123:           {copied ? <Check style={{ width: 10, height: 10 }} /> : <Copy style={{ width: 10, height: 10 }} />}
+124:         </button>
+125:       </div>
+126: 
+127:       <div style={{ fontSize: 12, color: '#fff', fontWeight: 600, wordBreak: 'break-all', lineHeight: 1.2 }}>
+128:         {data.label}
+129:       </div>
+130: 
+131:       {data.address && !data.label.includes('...') && data.address !== data.label && (
+132:         <div style={{ fontSize: 9, color: '#ffffffaa', marginTop: 3, fontFamily: 'monospace' }}>
+133:           {`${data.address.slice(0, 6)}...${data.address.slice(-4)}`}
+134:         </div>
+135:       )}
+136: 
+137:       {/* Prominently visible transferred money inside node card - NO lines can cross or block it */}
+138:       {isSuspect && hasSent && (
+139:         <div
+140:           className="mt-2 px-2 py-0.5 rounded bg-black/45 border border-white/20 text-[10px] font-mono font-bold text-white flex items-center justify-center gap-1 shadow-sm"
+141:           title={`Total Outflow: ${formatAmount(data.sentAmount, 6)} ${data.token || 'ETH'}`}
+142:         >
+143:           <ArrowUpRight className="w-3 h-3 text-red-300 flex-shrink-0" />
+144:           <span className="truncate">Out: {formatAmount(data.sentAmount, 2)} {data.token || 'ETH'}</span>
+145:         </div>
+146:       )}
+147: 
+148:       {!isSuspect && hasReceived && (
+149:         <div
+150:           className="mt-2 px-2 py-0.5 rounded bg-emerald-950/90 border border-emerald-400/60 text-[10px] font-mono font-bold text-emerald-300 flex items-center justify-center gap-1 shadow-sm"
+151:           title={`Received: ${formatAmount(data.receivedAmount, 6)} ${data.token || 'USDT'}`}
+152:         >
+153:           <ArrowDownLeft className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+154:           <span className="truncate">+{formatAmount(data.receivedAmount, 4)} {data.token || 'USDT'}</span>
+155:         </div>
+156:       )}
+157: 
+158:       {!isSuspect && !hasReceived && hasSent && (
+159:         <div
+160:           className="mt-2 px-2 py-0.5 rounded bg-cyan-950/90 border border-cyan-400/60 text-[10px] font-mono font-bold text-cyan-300 flex items-center justify-center gap-1 shadow-sm"
+161:           title={`Sent: ${formatAmount(data.sentAmount, 6)} ${data.token || 'ETH'}`}
+162:         >
+163:           <ArrowUpRight className="w-3 h-3 text-cyan-400 flex-shrink-0" />
+164:           <span className="truncate">-{formatAmount(data.sentAmount, 4)} {data.token || 'ETH'}</span>
+165:         </div>
+166:       )}
+167: 
+168:       <Handle type="source" position={Position.Right} style={{ background: cfg.border, width: 8, height: 8 }} />
+169:     </div>
+170:   );
+171: }
+172: 
+173: // ── Custom Transfer Edge with EdgeLabelRenderer (immune to line clipping) ────
+174: function TransferEdge({
+175:   id,
+176:   sourceX,
+177:   sourceY,
+178:   targetX,
+179:   targetY,
+180:   sourcePosition,
+181:   targetPosition,
+182:   style = {},
+183:   markerEnd,
+184:   data,
+185:   selected,
+186: }: EdgeProps) {
+187:   const [edgePath, labelX, labelY] = getBezierPath({
+188:     sourceX,
+189:     sourceY,
+190:     sourcePosition,
+191:     targetX,
+192:     targetY,
+193:     targetPosition,
+194:   });
+195: 
+196:   const [hovered, setHovered] = useState(false);
+197:   const amountStr = data?.amount ? `${formatAmount(data.amount, 4)} ${data.token || 'ETH'}` : null;
+198:   const isPending = data?.status === 'PENDING';
+199: 
+200:   // Stagger label position along the bezier path so parallel lines don't stack labels on top of each other!
+201:   const offsetIndex = (data?.edgeIndex || 0) % 3;
+202:   // 0 -> 50% (midpoint), 1 -> 36% (closer to source), 2 -> 64% (closer to target)
+203:   const t = offsetIndex === 1 ? 0.36 : offsetIndex === 2 ? 0.64 : 0.50;
+204:   const posX = sourceX + (targetX - sourceX) * t;
+205:   const posY = sourceY + (targetY - sourceY) * t;
+206: 
+207:   return (
+208:     <>
+209:       <BaseEdge
+210:         id={id}
+211:         path={edgePath}
+212:         markerEnd={markerEnd}
+213:         style={{
+214:           ...style,
+215:           stroke: hovered || selected ? '#00f0ff' : isPending ? '#fbbf24' : '#334155',
+216:           strokeWidth: hovered || selected ? 3 : isPending ? 2 : 1.5,
+217:           strokeDasharray: isPending ? '5 5' : undefined,
+218:           transition: 'stroke 0.2s, stroke-width 0.2s',
+219:         }}
+220:       />
+221:       {/* Invisible wider stroke path for easy hovering on the line */}
+222:       <path
+223:         d={edgePath}
+224:         fill="none"
+225:         strokeOpacity={0}
+226:         strokeWidth={18}
+227:         className="cursor-pointer"
+228:         onMouseEnter={() => setHovered(true)}
+229:         onMouseLeave={() => setHovered(false)}
+230:       />
+231:       {amountStr && (
+232:         <EdgeLabelRenderer>
+233:           <div
+234:             style={{
+235:               position: 'absolute',
+236:               transform: `translate(-50%, -50%) translate(${posX}px,${posY}px)`,
+237:               pointerEvents: 'all',
+238:               zIndex: hovered || selected ? 1000 : 25,
+239:             }}
+240:             className="nodrag nopan cursor-pointer transition-transform hover:scale-110"
+241:             onMouseEnter={() => setHovered(true)}
+242:             onMouseLeave={() => setHovered(false)}
+243:           >
+244:             <div
+245:               className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-tight shadow-md border backdrop-blur-md flex items-center gap-1 select-none ${
+246:                 hovered || selected
+247:                   ? 'bg-cyan-950 text-cyan-200 border-cyan-400 ring-2 ring-cyan-400/50'
+248:                   : isPending
+249:                   ? 'bg-amber-950/95 text-amber-300 border-amber-500/70'
+250:                   : 'bg-slate-950/95 text-slate-200 border-slate-700/90 hover:border-cyan-400 hover:text-cyan-300'
+251:               }`}
+252:               style={{
+253:                 boxShadow: hovered || selected ? '0 0 14px rgba(0, 240, 255, 0.5)' : '0 4px 10px rgba(0,0,0,0.7)',
+254:               }}
+255:             >
+256:               <span>{amountStr}</span>
+257:               {isPending && <span className="text-[8px] px-1 rounded bg-amber-500/30 text-amber-300">PENDING</span>}
+258:             </div>
+259:           </div>
+260:         </EdgeLabelRenderer>
+261:       )}
+262:     </>
+263:   );
+264: }
+265: 
+266: const nodeTypes = { walletNode: WalletNode };
+267: const edgeTypes = { transferEdge: TransferEdge };
+268: 
+269: // ── Hierarchical layout: BFS left→right ─────────────────────────────────────
+270: function computeLayout(
+271:   rawNodes: any[],
+272:   rawEdges: any[],
+273:   suspectAddress: string,
+274: ): { nodes: Node[]; edges: Edge[] } {
+275:   const H_GAP = 340; // ample horizontal space to prevent line clustering
+276:   const V_GAP = 120; // ample vertical space between wallets
+277: 
+278:   // Compute incoming and outgoing transfers per node for instant card display
+279:   const nodeTransfers = new Map<string, { received: number; sent: number; token: string; primaryTxAmount: number; inCount: number; outCount: number }>();
+280:   for (const e of rawEdges) {
+281:     const amt = parseFloat(e.amount || '0') || 0;
+282:     const token = e.token || e.asset || 'ETH';
+283:     const src = (e.source || '').toLowerCase();
+284:     const tgt = (e.target || '').toLowerCase();
+285: 
+286:     if (!nodeTransfers.has(src)) {
+287:       nodeTransfers.set(src, { received: 0, sent: 0, token, primaryTxAmount: amt, inCount: 0, outCount: 0 });
+288:     }
+289:     const s = nodeTransfers.get(src)!;
+290:     s.sent += amt;
+291:     s.outCount += 1;
+292:     if (!s.token) s.token = token;
+293: 
+294:     if (!nodeTransfers.has(tgt)) {
+295:       nodeTransfers.set(tgt, { received: 0, sent: 0, token, primaryTxAmount: amt, inCount: 0, outCount: 0 });
+296:     }
+297:     const t = nodeTransfers.get(tgt)!;
+298:     t.received += amt;
+299:     t.inCount += 1;
+300:     t.primaryTxAmount = amt;
+301:     if (!t.token) t.token = token;
+302:   }
+303: 
+304:   // BFS to assign columns (depths)
+305:   const depthMap = new Map<string, number>();
+306:   const queue: string[] = [suspectAddress.toLowerCase()];
+307:   depthMap.set(suspectAddress.toLowerCase(), 0);
+308: 
+309:   const adjOut = new Map<string, Set<string>>();
+310:   const adjIn  = new Map<string, Set<string>>();
+311:   for (const e of rawEdges) {
+312:     const src = (e.source || '').toLowerCase();
+313:     const tgt = (e.target || '').toLowerCase();
+314:     if (!adjOut.has(src)) adjOut.set(src, new Set());
+315:     if (!adjIn.has(tgt))  adjIn.set(tgt, new Set());
+316:     adjOut.get(src)!.add(tgt);
+317:     adjIn.get(tgt)!.add(src);
+318:   }
+319: 
+320:   // Forward BFS
+321:   while (queue.length) {
+322:     const cur = queue.shift()!;
+323:     const curDepth = depthMap.get(cur) ?? 0;
+324:     for (const nxt of adjOut.get(cur) ?? []) {
+325:       if (!depthMap.has(nxt)) {
+326:         depthMap.set(nxt, curDepth + 1);
+327:         queue.push(nxt);
+328:       }
+329:     }
+330:   }
+331:   // Backward BFS for nodes that feed INTO the suspect
+332:   const backQueue: string[] = [suspectAddress.toLowerCase()];
+333:   const backVisited = new Set([suspectAddress.toLowerCase()]);
+334:   while (backQueue.length) {
+335:     const cur = backQueue.shift()!;
+336:     const curDepth = depthMap.get(cur) ?? 0;
+337:     for (const prev of adjIn.get(cur) ?? []) {
+338:       if (!depthMap.has(prev)) {
+339:         depthMap.set(prev, curDepth - 1);
+340:         if (!backVisited.has(prev)) { backQueue.push(prev); backVisited.add(prev); }
+341:       }
+342:     }
+343:   }
+344: 
+345:   // Group nodes by depth column
+346:   const columns = new Map<number, string[]>();
+347:   for (const n of rawNodes) {
+348:     const id = (n.id || '').toLowerCase();
+349:     const d = depthMap.get(id) ?? 0;
+350:     if (!columns.has(d)) columns.set(d, []);
+351:     columns.get(d)!.push(n.id);
+352:   }
+353:   // Also add nodes not reachable from suspect (orphans → depth 999)
+354:   for (const n of rawNodes) {
+355:     const id = (n.id || '').toLowerCase();
+356:     if (!depthMap.has(id)) {
+357:       depthMap.set(id, 999);
+358:       if (!columns.has(999)) columns.set(999, []);
+359:       columns.get(999)!.push(n.id);
+360:     }
+361:   }
+362: 
+363:   // Assign pixel positions
+364:   const posMap = new Map<string, { x: number; y: number }>();
+365:   const sortedDepths = Array.from(columns.keys()).sort((a, b) => a - b);
+366:   sortedDepths.forEach((depth, colIdx) => {
+367:     const col = columns.get(depth)!;
+368:     col.forEach((id, rowIdx) => {
+369:       posMap.set(id, {
+370:         x: colIdx * H_GAP,
+371:         y: rowIdx * V_GAP - ((col.length - 1) * V_GAP) / 2,
+372:       });
+373:     });
+374:   });
+375: 
+376:   const nodes: Node[] = rawNodes.map((n: any) => {
+377:     const id = (n.id || '').toLowerCase();
+378:     const tr = nodeTransfers.get(id);
+379:     const isSuspect = id === suspectAddress.toLowerCase();
+380: 
+381:     return {
+382:       id: n.id,
+383:       type: 'walletNode',
+384:       position: posMap.get(n.id) ?? { x: 0, y: 0 },
+385:       data: {
+386:         label: n.label || `${n.id.slice(0, 6)}...${n.id.slice(-4)}`,
+387:         address: n.address || n.id,
+388:         nodeType: isSuspect ? 'suspect' : (n.type || 'wallet'),
+389:         balance: n.balance,
+390:         riskScore: n.riskScore,
+391:         riskLevel: n.riskLevel,
+392:         entityLabel: n.entityLabel,
+393:         dataSource: n.dataSource,
+394:         receivedAmount: tr?.received ?? 0,
+395:         sentAmount: tr?.sent ?? 0,
+396:         primaryTxAmount: tr?.primaryTxAmount ?? 0,
+397:         token: tr?.token || 'ETH',
+398:         inCount: tr?.inCount ?? 0,
+399:         outCount: tr?.outCount ?? 0,
+400:         isSuspect,
+401:       },
+402:     };
+403:   });
+404: 
+405:   const edges: Edge[] = rawEdges.map((e: any, i: number) => {
+406:     const token = e.token || e.asset || 'ETH';
+407:     const amount = e.amount ? parseFloat(e.amount) : 0;
+408:     const isPending = e.status === 'PENDING';
+409: 
+410:     return {
+411:       id: `e-${i}-${e.txHash || i}`,
+412:       source: e.source,
+413:       target: e.target,
+414:       type: 'transferEdge',
+415:       animated: isPending, // ONLY animate pending transactions to prevent visual barcode noise
+416:       markerEnd: {
+417:         type: MarkerType.ArrowClosed,
+418:         color: isPending ? '#fbbf24' : '#475569',
+419:       },
+420:       data: {
+421:         ...e,
+422:         amount,
+423:         token,
+424:         status: e.status || 'CONFIRMED',
+425:         edgeIndex: i,
+426:       },
+427:     };
+428:   });
+429: 
+430:   return { nodes, edges };
+431: }
+432: 
+433: // ── Graph View Inner Component ────────────────────────────────────────────────
+434: function GraphViewContent() {
+435:   const searchParams = useSearchParams();
+436:   const initialAddress = searchParams.get('address') || '';
+437: 
+438:   const [address, setAddress] = useState(initialAddress);
+439:   const [nodes, setNodes] = useState<Node[]>([]);
+440:   const [edges, setEdges] = useState<Edge[]>([]);
+441:   const [loading, setLoading] = useState(false);
+442:   const [info, setInfo] = useState<{ txCount: number; dataSource: string; provider: string } | null>(null);
+443:   const [selectedNode, setSelectedNode] = useState<any | null>(null);
+444:   const [selectedEdge, setSelectedEdge] = useState<any | null>(null);
+445:   const [copiedSelected, setCopiedSelected] = useState(false);
+446: 
+447:   const { addToast } = useUIStore();
+448:   const { theme } = useThemeStore();
+449:   const isDark = theme === 'dark';
+450: 
+451:   const [depth, setDepth] = useState<number>(2);
+452: 
+453:   // React Flow hooks for camera and preview radar movement
+454:   const { setCenter, fitView } = useReactFlow();
+455: 
+456:   const buildGraph = useCallback(async (targetAddr?: string, targetDepth?: number) => {
+457:     const addr = (targetAddr || address).trim();
+458:     if (!addr) return;
+459:     const currentDepth = targetDepth !== undefined ? targetDepth : depth;
+460:     setLoading(true);
+461:     setInfo(null);
+462:     setSelectedNode(null);
+463:     setSelectedEdge(null);
+464: 
+465:     try {
+466:       const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : '';
+467:       const res = await fetch(
+468:         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/graph/trace?address=${encodeURIComponent(addr)}&depth=${currentDepth}`,
+469:         { headers: { Authorization: `Bearer ${token}` } }
+470:       );
+471:       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+472:       const data = await res.json();
+473: 
+474:       if (!data.nodes?.length) {
+475:         addToast('No transactions found for this address. Run an investigation first or verify the address.', 'warning' as any);
+476:         setNodes([]);
+477:         setEdges([]);
+478:         return;
+479:       }
+480: 
+481:       const { nodes: ln, edges: le } = computeLayout(data.nodes, data.edges, addr);
+482:       setNodes(ln);
+483:       setEdges(le);
+484:       setInfo({
+485:         txCount: data.edges?.length ?? 0,
+486:         dataSource: data.dataSource || 'DATABASE',
+487:         provider: data.providerName || 'Postgres Cache',
+488:       });
+489:       addToast(`Graph built: ${ln.length} wallets, ${le.length} transactions (${currentDepth} Hops)`, 'success' as any);
+490:       setTimeout(() => {
+491:         fitView({ padding: 0.25, duration: 600 });
+492:       }, 100);
+493:     } catch (err: any) {
+494:       addToast(`Failed to build graph: ${err.message}`, 'error' as any);
+495:     } finally {
+496:       setLoading(false);
+497:     }
+498:   }, [address, depth, addToast, fitView]);
+499: 
+500:   // Automatically trace if an address was passed in URL query param
+501:   useEffect(() => {
+502:     if (initialAddress) {
+503:       setAddress(initialAddress);
+504:       buildGraph(initialAddress, depth);
+505:     }
+506:   }, [initialAddress]);
+507: 
+508:   const handleKeyDown = (e: React.KeyboardEvent) => {
+509:     if (e.key === 'Enter') buildGraph();
+510:   };
+511: 
+512:   const onNodeClick = (_: React.MouseEvent, node: Node) => {
+513:     setSelectedNode(node);
+514:     setSelectedEdge(null);
+515:   };
+516: 
+517:   const onEdgeClick = (_: React.MouseEvent, edge: Edge) => {
+518:     setSelectedEdge(edge);
+519:     setSelectedNode(null);
+520:   };
+521: 
+522:   const copySelectedAddress = (addrToCopy?: string) => {
+523:     const text = addrToCopy || selectedNode?.data?.address;
+524:     if (text) {
+525:       navigator.clipboard.writeText(text);
+526:       setCopiedSelected(true);
+527:       addToast('Address copied to clipboard', 'success' as any);
+528:       setTimeout(() => setCopiedSelected(false), 2000);
+529:     }
+530:   };
+531: 
+532:   // Quick navigation helpers
+533:   const focusSuspect = useCallback(() => {
+534:     const suspectNode = nodes.find(
+535:       (n) => (n.data as any)?.isSuspect || n.id.toLowerCase() === address.trim().toLowerCase()
+536:     );
+537:     if (suspectNode && suspectNode.position) {
+538:       setCenter(suspectNode.position.x + 80, suspectNode.position.y + 30, { duration: 500, zoom: 1.15 });
+539:     } else if (nodes.length > 0) {
+540:       setCenter(nodes[0].position.x + 80, nodes[0].position.y + 30, { duration: 500, zoom: 1.15 });
+541:     }
+542:   }, [nodes, address, setCenter]);
+543: 
+544:   const focusLatestHop = useCallback(() => {
+545:     if (nodes.length === 0) return;
+546:     let maxNode = nodes[0];
+547:     for (const n of nodes) {
+548:       if (n.position.x > maxNode.position.x) {
+549:         maxNode = n;
+550:       }
+551:     }
+552:     if (maxNode && maxNode.position) {
+553:       setCenter(maxNode.position.x + 80, maxNode.position.y + 30, { duration: 500, zoom: 1.0 });
+554:     }
+555:   }, [nodes, setCenter]);
+556: 
+557:   // Compute node incoming / outgoing stats
+558:   const selectedNodeStats = useMemo(() => {
+559:     if (!selectedNode) return null;
+560:     const nodeId = selectedNode.id.toLowerCase();
+561:     const inEdges = edges.filter((e) => e.target.toLowerCase() === nodeId);
+562:     const outEdges = edges.filter((e) => e.source.toLowerCase() === nodeId);
+563: 
+564:     let inTotal = 0;
+565:     let outTotal = 0;
+566:     let token = 'ETH';
+567: 
+568:     inEdges.forEach((e) => {
+569:       const val = parseFloat(e.data?.amount || '0') || 0;
+570:       inTotal += val;
+571:       if (e.data?.token) token = e.data.token;
+572:     });
+573: 
+574:     outEdges.forEach((e) => {
+575:       const val = parseFloat(e.data?.amount || '0') || 0;
+576:       outTotal += val;
+577:       if (e.data?.token) token = e.data.token;
+578:     });
+579: 
+580:     const outBranches = outEdges.map((e) => ({
+581:       target: e.target,
+582:       amount: e.data?.amount || '0',
+583:       token: e.data?.token || 'ETH',
+584:       txHash: e.data?.txHash,
+585:       status: e.data?.status || 'CONFIRMED',
+586:     }));
+587: 
+588:     return {
+589:       inCount: inEdges.length,
+590:       outCount: outEdges.length,
+591:       inTotal: inTotal.toFixed(4),
+592:       outTotal: outTotal.toFixed(4),
+593:       token,
+594:       outBranches,
+595:     };
+596:   }, [selectedNode, edges]);
+597: 
+598:   return (
+599:     <div style={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column', gap: 16, padding: 24, position: 'relative' }}>
+600:       {/* Header */}
+601:       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+602:         <div>
+603:           <h1 className="text-2xl font-bold" style={{ color: isDark ? '#ffffff' : '#101318' }}>
+604:             Transaction Graph
+605:           </h1>
+606:           <p className="text-sm font-mono mt-1" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
+607:             Fund flow visualization — BFS hierarchical layout with multi-hop tracing & interactive radar navigation
+608:           </p>
+609:         </div>
+610:         {info && (
+611:           <div
+612:             className="flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded-lg border"
+613:             style={{
+614:               background: isDark ? '#1a1e2f' : '#f1f5f9',
+615:               color: isDark ? '#94a3b8' : '#64748b',
+616:               borderColor: isDark ? '#2a304a' : '#e2e8f0',
+617:             }}
+618:           >
+619:             <Info className="w-3.5 h-3.5 text-neon-cyan" />
+620:             <span>{info.txCount} txs</span>
+621:             <span>•</span>
+622:             <span>Source: {info.dataSource}</span>
+623:             <span>•</span>
+624:             <span>Provider: {info.provider}</span>
+625:           </div>
+626:         )}
+627:       </div>
+628: 
+629:       {/* Search and Hop Depth Selector bar */}
+630:       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+631:         <input
+632:           value={address}
+633:           onChange={(e) => setAddress(e.target.value)}
+634:           onKeyDown={handleKeyDown}
+635:           placeholder="Enter wallet address to trace (e.g. 0x28C6c06... or TXcRND...)"
+636:           style={{
+637:             flex: 1,
+638:             padding: '10px 16px',
+639:             borderRadius: 8,
+640:             fontSize: 13,
+641:             fontFamily: 'monospace',
+642:             background: isDark ? '#1a1e2f' : '#f8fafc',
+643:             border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+644:             color: isDark ? '#ffffff' : '#101318',
+645:             outline: 'none',
+646:           }}
+647:         />
+648: 
+649:         {/* Multi-Hop Depth Selector */}
+650:         <div
+651:           className="flex items-center gap-1.5 p-1 rounded-lg border"
+652:           style={{
+653:             background: isDark ? '#1a1e2f' : '#f8fafc',
+654:             borderColor: isDark ? '#334155' : '#e2e8f0',
+655:           }}
+656:         >
+657:           <span className="text-[11px] font-mono px-2 text-slate-400 font-semibold flex items-center gap-1">
+658:             <Layers className="w-3 h-3 text-neon-cyan" />
+659:             Hops:
+660:           </span>
+661:           {[1, 2, 3, 5, 10, 20].map((d) => (
+662:             <button
+663:               key={d}
+664:               onClick={() => {
+665:                 setDepth(d);
+666:                 if (address.trim()) buildGraph(address, d);
+667:               }}
+668:               className="px-2 py-1 text-xs font-mono font-bold rounded transition-colors"
+669:               style={{
+670:                 background: depth === d ? (isDark ? '#00f0ff' : '#0891b2') : 'transparent',
+671:                 color: depth === d ? '#000000' : (isDark ? '#94a3b8' : '#64748b'),
+672:               }}
+673:             >
+674:               {d}
+675:             </button>
+676:           ))}
+677:           <div className="flex items-center gap-1 pl-1 border-l border-slate-700/60">
+678:             <span className="text-[10px] text-slate-400 font-mono">Custom:</span>
+679:             <input
+680:               type="number"
+681:               min="1"
+682:               max="50"
+683:               value={depth}
+684:               onChange={(e) => {
+685:                 const val = Math.max(1, Math.min(50, parseInt(e.target.value) || 1));
+686:                 setDepth(val);
+687:               }}
+688:               onKeyDown={(e) => {
+689:                 if (e.key === 'Enter' && address.trim()) buildGraph(address, depth);
+690:               }}
+691:               className="w-12 px-1.5 py-0.5 rounded text-xs font-mono font-bold text-center outline-none"
+692:               style={{
+693:                 background: isDark ? '#0b0f1a' : '#ffffff',
+694:                 border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+695:                 color: isDark ? '#00f0ff' : '#0891b2',
+696:               }}
+697:               title="Custom depth hops (1-50)"
+698:             />
+699:           </div>
+700:         </div>
+701: 
+702:         <button
+703:           onClick={() => buildGraph()}
+704:           disabled={loading || !address.trim()}
+705:           style={{
+706:             padding: '10px 24px',
+707:             borderRadius: 8,
+708:             fontWeight: 700,
+709:             fontSize: 13,
+710:             background: loading ? '#334155' : '#00f0ff',
+711:             color: '#000',
+712:             border: 'none',
+713:             cursor: loading ? 'not-allowed' : 'pointer',
+714:             display: 'flex',
+715:             alignItems: 'center',
+716:             gap: 8,
+717:           }}
+718:         >
+719:           {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+720:           {loading ? 'Tracing...' : 'Trace'}
+721:         </button>
+722:       </div>
+723: 
+724:       {/* Legend */}
+725:       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+726:         {Object.entries(NODE_CONFIG).filter(([k]) => k !== 'default').map(([type, cfg]) => (
+727:           <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: isDark ? '#94a3b8' : '#64748b' }}>
+728:             <div style={{ width: 10, height: 10, borderRadius: 3, background: cfg.bg, border: `1px solid ${cfg.border}` }} />
+729:             {cfg.label}
+730:           </div>
+731:         ))}
+732:       </div>
+733: 
+734:       {/* Graph canvas container */}
+735:       <div
+736:         style={{
+737:           flex: 1,
+738:           borderRadius: 12,
+739:           overflow: 'hidden',
+740:           border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+741:           background: isDark ? '#0b0f1a' : '#f8fafc',
+742:           position: 'relative',
+743:         }}
+744:       >
+745:         {nodes.length === 0 ? (
+746:           <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+747:             <AlertTriangle className="w-12 h-12" style={{ color: isDark ? '#475569' : '#cbd5e1' }} />
+748:             <p style={{ color: isDark ? '#64748b' : '#94a3b8', fontSize: 14 }}>
+749:               Enter a wallet address and click <strong>Trace</strong> to visualize the fund flow graph
+750:             </p>
+751:             <p style={{ color: isDark ? '#475569' : '#cbd5e1', fontSize: 12, fontFamily: 'monospace' }}>
+752:               Tip: Click any node or transfer badge in the graph to view live balances, transfer volumes, and inspect on-chain details
+753:             </p>
+754:           </div>
+755:         ) : (
+756:           <>
+757:             <ReactFlow
+758:               nodes={nodes}
+759:               edges={edges}
+760:               nodeTypes={nodeTypes}
+761:               edgeTypes={edgeTypes}
+762:               onNodeClick={onNodeClick}
+763:               onEdgeClick={onEdgeClick}
+764:               fitView
+765:               fitViewOptions={{ padding: 0.25 }}
+766:               minZoom={0.1}
+767:               maxZoom={2.5}
+768:             >
+769:               <Background color={isDark ? '#1e293b' : '#cbd5e1'} gap={24} />
+770:               <Controls />
+771: 
+772:               {/* Interactive MiniMap with direct Drag & Click viewport navigation */}
+773:               <MiniMap
+774:                 pannable={true}
+775:                 zoomable={true}
+776:                 nodeColor={(n) => NODE_CONFIG[n.data?.nodeType]?.bg || '#3b82f6'}
+777:                 nodeStrokeWidth={2}
+778:                 nodeBorderRadius={4}
+779:                 maskColor={isDark ? 'rgba(11, 15, 26, 0.75)' : 'rgba(241, 245, 249, 0.75)'}
+780:                 maskStrokeColor="#00f0ff"
+781:                 maskStrokeWidth={2}
+782:                 onNodeClick={(_e, node) => {
+783:                   setSelectedNode(node);
+784:                   setSelectedEdge(null);
+785:                   if (node.position) {
+786:                     setCenter(node.position.x + 80, node.position.y + 30, { duration: 400, zoom: 1.15 });
+787:                   }
+788:                 }}
+789:                 style={{
+790:                   background: isDark ? '#0b0f1a' : '#ffffff',
+791:                   border: `2px solid ${isDark ? 'rgba(0, 240, 255, 0.4)' : '#cbd5e1'}`,
+792:                   borderRadius: 12,
+793:                   width: 240,
+794:                   height: 160,
+795:                   boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.8)' : '0 8px 32px rgba(0,0,0,0.15)',
+796:                 }}
+797:               />
+798:             </ReactFlow>
+799: 
+800:             {/* Floating Navigation Radar Toolbar right above the preview window */}
+801:             <div className="absolute bottom-[180px] right-4 z-10 flex flex-col gap-1.5 p-2 rounded-xl bg-slate-900/95 border border-slate-700/80 shadow-2xl backdrop-blur-md">
+802:               <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-700/50">
+803:                 <span className="flex items-center gap-1 text-[11px] font-mono font-bold text-neon-cyan">
+804:                   <Compass className="w-3.5 h-3.5" />
+805:                   Radar Navigator
+806:                 </span>
+807:                 <span className="text-[9px] font-mono text-slate-400">
+808:                   Click/Drag Map
+809:                 </span>
+810:               </div>
+811:               <div className="flex items-center gap-1.5 pt-0.5">
+812:                 <button
+813:                   onClick={() => fitView({ padding: 0.25, duration: 500 })}
+814:                   className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[10px] font-mono font-bold transition-colors flex items-center gap-1 border border-slate-700/50"
+815:                   title="Fit whole graph to screen"
+816:                 >
+817:                   <Maximize2 className="w-3 h-3 text-neon-cyan" />
+818:                   Fit All
+819:                 </button>
+820:                 <button
+821:                   onClick={focusSuspect}
+822:                   className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[10px] font-mono font-bold transition-colors flex items-center gap-1 border border-slate-700/50"
+823:                   title="Jump directly to Root Suspect (Hop 0)"
+824:                 >
+825:                   <Crosshair className="w-3 h-3 text-red-400" />
+826:                   Suspect
+827:                 </button>
+828:                 <button
+829:                   onClick={focusLatestHop}
+830:                   className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[10px] font-mono font-bold transition-colors flex items-center gap-1 border border-slate-700/50"
+831:                   title="Jump to Latest Hop Column"
+832:                 >
+833:                   <Navigation className="w-3 h-3 text-emerald-400" />
+834:                   Latest
+835:                 </button>
+836:               </div>
+837:             </div>
+838:           </>
+839:         )}
+840: 
+841:         {/* Selected Edge (Transaction) Inspector Card */}
+842:         <AnimatePresence>
+843:           {selectedEdge && (
+844:             <motion.div
+845:               initial={{ opacity: 0, x: 20 }}
+846:               animate={{ opacity: 1, x: 0 }}
+847:               exit={{ opacity: 0, x: 20 }}
+848:               className="absolute top-4 right-4 z-20 rounded-xl border p-4 shadow-2xl backdrop-blur-md"
+849:               style={{
+850:                 background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.98)',
+851:                 borderColor: isDark ? 'rgba(0, 240, 255, 0.4)' : 'rgba(0, 150, 180, 0.4)',
+852:                 boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.8)' : '0 10px 30px rgba(0,0,0,0.1)',
+853:                 width: 340,
+854:               }}
+855:             >
+856:               <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}>
+857:                 <div className="flex items-center gap-2">
+858:                   <div className="w-3 h-3 rounded-full bg-neon-cyan animate-pulse" />
+859:                   <span className="text-xs font-bold font-mono uppercase tracking-wider" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
+860:                     Transaction Transfer
+861:                   </span>
+862:                 </div>
+863:                 <button
+864:                   onClick={() => setSelectedEdge(null)}
+865:                   className="p-1 rounded hover:bg-slate-500/10 text-slate-400 hover:text-slate-200 transition-colors"
+866:                 >
+867:                   <X className="w-4 h-4" />
+868:                 </button>
+869:               </div>
+870: 
+871:               <div className="mt-3 space-y-3 font-mono">
+872:                 {/* Money Transferred Highlight */}
+873:                 <div className="p-3 rounded-lg bg-cyan-950/40 border border-cyan-500/40 text-center">
+874:                   <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-0.5">Transferred Volume</span>
+875:                   <div className="text-xl font-bold text-neon-cyan">
+876:                     {formatAmount(selectedEdge.data?.amount || 0, 6)} {selectedEdge.data?.token || 'ETH'}
+877:                   </div>
+878:                   <div className="mt-1 flex items-center justify-center gap-1.5 text-[10px]">
+879:                     <span className={`px-2 py-0.5 rounded-full font-bold ${
+880:                       selectedEdge.data?.status === 'PENDING' ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'
+881:                     }`}>
+882:                       {selectedEdge.data?.status || 'CONFIRMED'}
+883:                     </span>
+884:                   </div>
+885:                 </div>
+886: 
+887:                 {/* From / To Addresses */}
+888:                 <div className="space-y-2 text-xs">
+889:                   <div>
+890:                     <span className="text-[10px] text-slate-400 block mb-1">FROM SENDER:</span>
+891:                     <div className="flex items-center justify-between p-2 rounded bg-slate-500/10 border border-slate-500/20">
+892:                       <span className="truncate text-slate-200">{selectedEdge.source}</span>
+893:                       <button
+894:                         onClick={() => copySelectedAddress(selectedEdge.source)}
+895:                         className="p-1 rounded hover:bg-slate-500/20 text-slate-300"
+896:                         title="Copy sender address"
+897:                       >
+898:                         <Copy className="w-3.5 h-3.5" />
+899:                       </button>
+900:                     </div>
+901:                   </div>
+902: 
+903:                   <div>
+904:                     <span className="text-[10px] text-slate-400 block mb-1">TO RECIPIENT:</span>
+905:                     <div className="flex items-center justify-between p-2 rounded bg-slate-500/10 border border-slate-500/20">
+906:                       <span className="truncate text-emerald-300 font-bold">{selectedEdge.target}</span>
+907:                       <button
+908:                         onClick={() => copySelectedAddress(selectedEdge.target)}
+909:                         className="p-1 rounded hover:bg-slate-500/20 text-slate-300"
+910:                         title="Copy recipient address"
+911:                       >
+912:                         <Copy className="w-3.5 h-3.5" />
+913:                       </button>
+914:                     </div>
+915:                   </div>
+916: 
+917:                   {selectedEdge.data?.txHash && (
+918:                     <div>
+919:                       <span className="text-[10px] text-slate-400 block mb-1">TRANSACTION HASH:</span>
+920:                       <div className="flex items-center justify-between p-2 rounded bg-slate-500/10 border border-slate-500/20">
+921:                         <span className="truncate text-slate-300">{selectedEdge.data.txHash}</span>
+922:                         <button
+923:                           onClick={() => copySelectedAddress(selectedEdge.data.txHash)}
+924:                           className="p-1 rounded hover:bg-slate-500/20 text-slate-300"
+925:                           title="Copy transaction hash"
+926:                         >
+927:                           <Copy className="w-3.5 h-3.5" />
+928:                         </button>
+929:                       </div>
+930:                     </div>
+931:                   )}
+932:                 </div>
+933: 
+934:                 {/* Actions */}
+935:                 <div className="pt-2 flex flex-col gap-2">
+936:                   <button
+937:                     onClick={() => {
+938:                       setAddress(selectedEdge.target);
+939:                       buildGraph(selectedEdge.target);
+940:                     }}
+941:                     className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all bg-neon-cyan/20 hover:bg-neon-cyan/30 text-neon-cyan border border-neon-cyan/40"
+942:                   >
+943:                     <ArrowRight className="w-3.5 h-3.5" />
+944:                     Trace Recipient ({selectedEdge.target.slice(0, 6)}...{selectedEdge.target.slice(-4)})
+945:                   </button>
+946:                 </div>
+947:               </div>
+948:             </motion.div>
+949:           )}
+950:         </AnimatePresence>
+951: 
+952:         {/* Selected Node Inspector Drawer / Card */}
+953:         <AnimatePresence>
+954:           {selectedNode && (
+955:             <motion.div
+956:               initial={{ opacity: 0, x: 20 }}
+957:               animate={{ opacity: 1, x: 0 }}
+958:               exit={{ opacity: 0, x: 20 }}
+959:               className="absolute top-4 right-4 z-20 rounded-xl border p-4 shadow-2xl backdrop-blur-md"
+960:               style={{
+961:                 background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.98)',
+962:                 borderColor: isDark ? 'rgba(0, 240, 255, 0.3)' : 'rgba(0, 150, 180, 0.3)',
+963:                 boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.8)' : '0 10px 30px rgba(0,0,0,0.1)',
+964:                 width: 320,
+965:               }}
+966:             >
+967:               <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}>
+968:                 <div className="flex items-center gap-2">
+969:                   <div
+970:                     className="w-3 h-3 rounded-full"
+971:                     style={{ background: NODE_CONFIG[selectedNode.data.nodeType]?.bg || '#1e293b' }}
+972:                   />
+973:                   <span className="text-xs font-bold font-mono uppercase tracking-wider" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
+974:                     {NODE_CONFIG[selectedNode.data.nodeType]?.label || 'WALLET'}
+975:                   </span>
+976:                 </div>
+977:                 <button
+978:                   onClick={() => setSelectedNode(null)}
+979:                   className="p-1 rounded hover:bg-slate-500/10 text-slate-400 hover:text-slate-200 transition-colors"
+980:                 >
+981:                   <X className="w-4 h-4" />
+982:                 </button>
+983:               </div>
+984: 
+985:               <div className="mt-3 space-y-3">
+986:                 {/* Node Label & Address */}
+987:                 <div>
+988:                   <div className="text-sm font-bold" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
+989:                     {selectedNode.data.label}
+990:                   </div>
+991:                   <div className="flex items-center justify-between gap-2 mt-1 p-2 rounded bg-slate-500/10 border border-slate-500/20 font-mono text-xs">
+992:                     <span className="truncate" style={{ color: isDark ? '#00f0ff' : '#0891b2' }}>
+993:                       {selectedNode.data.address}
+994:                     </span>
+995:                     <button
+996:                       onClick={() => copySelectedAddress()}
+997:                       className="p-1 rounded hover:bg-slate-500/20 text-slate-300"
+998:                       title="Copy full address"
+999:                     >
+1000:                       {copiedSelected ? <Check className="w-3.5 h-3.5 text-neon-green" /> : <Copy className="w-3.5 h-3.5" />}
+1001:                     </button>
+1002:                   </div>
+1003:                 </div>
+1004: 
+1005:                 {/* Transfer Metrics in Graph */}
+1006:                 {selectedNodeStats && (
+1007:                   <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+1008:                     <div className="p-2.5 rounded-lg bg-slate-500/5 border border-slate-500/10">
+1009:                       <div className="flex items-center gap-1 text-[10px] text-slate-400 font-mono">
+1010:                         <ArrowDownLeft className="w-3 h-3 text-neon-green" /> INFLOW ({selectedNodeStats.inCount})
+1011:                       </div>
+1012:                       <div className="font-mono font-bold mt-0.5 text-xs truncate" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
+1013:                         {selectedNodeStats.inTotal} {selectedNodeStats.token}
+1014:                       </div>
+1015:                     </div>
+1016: 
+1017:                     <div className="p-2.5 rounded-lg bg-slate-500/5 border border-slate-500/10">
+1018:                       <div className="flex items-center gap-1 text-[10px] text-slate-400 font-mono">
+1019:                         <ArrowUpRight className="w-3 h-3 text-neon-red" /> OUTFLOW ({selectedNodeStats.outCount})
+1020:                       </div>
+1021:                       <div className="font-mono font-bold mt-0.5 text-xs truncate" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
+1022:                         {selectedNodeStats.outTotal} {selectedNodeStats.token}
+1023:                       </div>
+1024:                     </div>
+1025:                   </div>
+1026:                 )}
+1027: 
+1028:                 {/* Transferred Branches Outflow Section */}
+1029:                 {selectedNodeStats && selectedNodeStats.outBranches?.length > 0 && (
+1030:                   <div className="p-2.5 rounded-lg border bg-slate-500/5" style={{ borderColor: isDark ? 'rgba(0, 240, 255, 0.2)' : 'rgba(0, 150, 180, 0.2)' }}>
+1031:                     <div className="flex items-center justify-between pb-1 mb-2 border-b border-slate-700/50">
+1032:                       <span className="text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1" style={{ color: isDark ? '#00f0ff' : '#0891b2' }}>
+1033:                         <GitBranch className="w-3 h-3" />
+1034:                         Transferred Branches ({selectedNodeStats.outBranches.length})
+1035:                       </span>
+1036:                       <span className="text-[10px] font-mono text-slate-400">
+1037:                         Total {selectedNodeStats.outTotal} {selectedNodeStats.token}
+1038:                       </span>
+1039:                     </div>
+1040: 
+1041:                     <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+1042:                       {selectedNodeStats.outBranches.map((branch: any, idx: number) => (
+1043:                         <div
+1044:                           key={idx}
+1045:                           className="flex items-center justify-between text-[11px] p-1.5 rounded bg-slate-500/10 font-mono"
+1046:                         >
+1047:                           <div className="flex items-center gap-1 truncate mr-2">
+1048:                             <ArrowDownRight className="w-3 h-3 text-neon-cyan flex-shrink-0" />
+1049:                             <span className="truncate" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
+1050:                               {branch.target.slice(0, 6)}...{branch.target.slice(-4)}
+1051:                             </span>
+1052:                           </div>
+1053:                           <div className="flex items-center gap-1.5 flex-shrink-0">
+1054:                             <span className="font-bold text-neon-cyan">
+1055:                               {formatAmount(branch.amount, 6)} {branch.token}
+1056:                             </span>
+1057:                             <button
+1058:                               onClick={(e) => {
+1059:                                 e.stopPropagation();
+1060:                                 setAddress(branch.target);
+1061:                                 buildGraph(branch.target);
+1062:                               }}
+1063:                               className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-800 hover:bg-neon-cyan/20 text-slate-300 hover:text-white transition-colors"
+1064:                               title="Trace this branch"
+1065:                             >
+1066:                               Trace
+1067:                             </button>
+1068:                           </div>
+1069:                         </div>
+1070:                       ))}
+1071:                     </div>
+1072:                   </div>
+1073:                 )}
+1074: 
+1075:                 {/* Actions */}
+1076:                 <div className="pt-2 flex flex-col gap-2">
+1077:                   <Link
+1078:                     href={`/dashboard/wallets/${encodeURIComponent(selectedNode.data.address)}`}
+1079:                     className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all"
+1080:                     style={{
+1081:                       background: isDark ? 'rgba(0, 240, 255, 0.15)' : 'rgba(0, 150, 180, 0.15)',
+1082:                       color: isDark ? '#00f0ff' : '#0891b2',
+1083:                       border: isDark ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid rgba(0, 150, 180, 0.4)',
+1084:                     }}
+1085:                   >
+1086:                     <Wallet className="w-3.5 h-3.5" />
+1087:                     Open Live Wallet Intelligence
+1088:                   </Link>
+1089: 
+1090:                   <button
+1091:                     onClick={() => {
+1092:                       setAddress(selectedNode.data.address);
+1093:                       buildGraph(selectedNode.data.address);
+1094:                     }}
+1095:                     className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition-all"
+1096:                     style={{
+1097:                       background: isDark ? '#1e293b' : '#f1f5f9',
+1098:                       color: isDark ? '#cbd5e1' : '#475569',
+1099:                       border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+1100:                     }}
+1101:                   >
+1102:                     <RefreshCw className="w-3 h-3" />
+1103:                     Re-center Trace from this Wallet
+1104:                   </button>
+1105:                 </div>
+1106:               </div>
+1107:             </motion.div>
+1108:           )}
+1109:         </AnimatePresence>
+1110:       </div>
+1111:     </div>
+1112:   );
+1113: }
+1114: 
+1115: export default function GraphPage() {
+1116:   return (
+1117:     <Suspense fallback={<div className="p-6 text-sm text-slate-400">Loading Transaction Graph...</div>}>
+1118:       <ReactFlowProvider>
+1119:         <GraphViewContent />
+1120:       </ReactFlowProvider>
+1121:     </Suspense>
+1122:   );
+1123: }
+
+(End of file - total 1123 lines)
+</content>

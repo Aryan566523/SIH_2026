@@ -84,7 +84,7 @@ export class InvestigationsService {
   async findById(id: string): Promise<Investigation> {
     const inv = await this.invRepo.findOne({
       where: { id },
-      relations: ['jobs', 'case'],
+      relations: ['jobs', 'case', 'case.complaints'],
     });
     if (!inv) throw new NotFoundException('Investigation not found');
 

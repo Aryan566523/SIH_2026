@@ -1,0 +1,266 @@
+Found 219 matches
+
+apps/web\src\data\glossary.json
+Line 34:         "description": "The citizen-facing portal (cybercrime.gov.in) where victims report cyber fraud. Suspect wallet addresses reported here feed into ChainSentinel AI investigations.",
+Line 69:         "description": "In ChainSentinel, AI is utilized to automatically analyze complex transaction graphs, detect money laundering patterns (like Fan-Out or Peel Chains), summarize investigation findings, and generate actionable insights and court-admissible reports without manual intervention.",
+Line 79:         "description": "The machine learning model used by ChainSentinel AI for wallet risk classification. XGBoost (Extreme Gradient Boosting) is a trained decision-tree ensemble. It ingests 25 wallet-level features (transaction frequency, average amount, interaction with known entities, hop depth from report, etc.) and outputs a risk probability (0.0-1.0) which is converted to a 0-100 risk score. The model also produces SHAP (SHapley Additive exPlanations) values to explain each prediction.",
+Line 100:         "description": "If the XGBoost model artifacts are unavailable (e.g., first startup before training), the system falls back to a deterministic rule-based risk engine. This engine scores wallets using configurable weighted rules: mixer interaction (+35 points), sanctioned address (+50 points), rapid forwarding (+20 points), VASP proximity (-10 points), etc.",
+Line 114:         "description": "Any exchange, broker, or platform that offers cryptocurrency trading or custody services (e.g., Binance, WazirX, Coinbase). VASP identification is the primary goal of each investigation — if the suspect wallet ultimately reaches a VASP, a legal notice can freeze the funds.",
+Line 187:         "description": "The process exchanges use to verify user identity. If a suspect wallet reaches a KYC-compliant VASP, LEAs can obtain user details via a legal notice.",
+Line 234:         "description": "A fraud pattern where a single wallet distributes funds to many sub-wallets simultaneously to obfuscate the trail. Detected when the suspect sends to ≥3 unique destinations.",
+Line 243:         "description": "When funds are forwarded between wallets within a very short time window (<1 hour), indicating deliberate layering to complicate tracing.",
+Line 279:         "description": "Malware that encrypts victim data and demands cryptocurrency payment for decryption keys. ChainSentinel AI traces ransom wallet addresses to the receiving VASP.",
+Line 287:         "description": "Fraudsters who coerce victims with intimate images and demand crypto payments. Suspect wallet addresses from these cases are among the most common inputs.",
+Line 303:         "description": "A laundering technique where a large amount of cryptocurrency is passed through a long chain of wallets, with a small amount peeled off at each hop and sent to an exchange.",
+Line 326:         "description": "The graph traversal algorithm used in the Fund Flow Trace stage. Starting from the suspect wallet, BFS explores all neighbours (directly connected wallets) before going deeper.",
+Line 353:         "description": "Pipeline stage 11 — matches graph nodes against the known VASP database (wallets, names, jurisdictions) and produces a confidence score and legal classification (SERVEABLE / UNSERVEABLE).",
+Line 369:         "description": "A cryptographic hash function used to generate the integrity fingerprint of each forensic report. Courts can verify a report hasn't been tampered with by re-computing its SHA-256 hash.",
+Line 386:         "description": "A single step in the transaction trail from one wallet to another. For example, moving funds from Wallet A to Wallet B is one hop. Investigators specify the max hops to trace how deep the money flows across the blockchain network.",
+Line 404:         "description": "An automated process where the AI orchestrator automatically traces a suspect wallet, ingests transactions, normalizes data, and identifies patterns up to a defined hop depth without manual intervention.",
+Line 413:         "description": "The phase in the pipeline where the system queries external blockchain explorers (or the local cached index) to download raw transaction history for a wallet.",
+Line 422:         "description": "Applying rules and known intelligence (like VASP deposit addresses or known scammer addresses) to identify the real-world entity controlling an anonymous wallet address.",
+Line 431:         "description": "Each additional hop multiplies the search space exponentially. If a wallet has N outgoing transactions on average, then at hop depth D, the system may inspect up to N^D potential wallets. For example: 5 transactions per wallet at depth 3 hops = 5^3 = 125 wallets. At 5 hops = 5^5 = 3,125 wallets. At 10 hops = 5^10 = ~9.7 million paths. This is why the system uses smart pruning, minimum amount filters, and auto-stop on VASP detection to keep the search tractable.",
+Line 441:         "description": "A pipeline condition that prunes transactions below a specified fiat threshold (e.g., ). This eliminates blockchain dust and gas refund transactions that are not relevant to fraud tracing, dramatically reducing the graph size and false positives.",
+Line 460:         "description": "First pipeline condition: the suspect wallet address is validated against known blockchain address formats. An Ethereum address starts with 0x and is 42 characters. TRON addresses start with T and are 34 characters. Bitcoin addresses start with 1, 3, or bc1. Any other format is rejected immediately.",
+Line 468:         "description": "Pipeline triggers a Fan-Out alert when a single wallet sends funds to 3 or more unique destinations within 24 hours. This is a primary money-mule dispersion indicator in cryptocurrency fraud.",
+Line 478:         "description": "Triggered when the system identifies a long linear chain (5 or more hops in a straight line) where each wallet passes nearly all its balance to the next. Indicates systematic layering to create distance from the original crime.",
+Line 488:         "description": "Triggered when a traced wallet interacts with a known cross-chain bridge protocol (e.g., ThorChain, Stargate, Multichain). Indicates the criminal is attempting to hide fund trail by jumping between blockchains.",
+Line 497:         "description": "A pipeline condition that flags transactions forwarded to a new wallet within less than 1 hour of receipt. Short hold-time is a classic layering technique and a strong indicator of intentional obfuscation.",
+Line 520:         "description": "The initial complaint document filed with police in India. The complaint's victim wallet address is the starting point for a ChainSentinel AI investigation.",
+Line 570:         "description": "An algorithm that assigns a risk score (0-100) to wallets based on their transaction history, interactions with darknet markets, mixers, or known fraud campaigns.",
+Line 579:         "description": "The system securely stores a cryptographic hash of all investigated transactions to prove data integrity and chain of custody for court proceedings.",
+Line 597:         "description": "A legal provision under Indian law that allows police to compel any organization (including VASPs/exchanges) to produce documents, records, or information. When ChainSentinel identifies a VASP as the fund destination, it generates a draft Section 91 notice to be served to the exchange requesting user KYC data for the destination wallet.",
+Line 607:         "description": "The legal requirement to prove that digital evidence has not been tampered with between collection and courtroom. ChainSentinel implements this via SHA-256 cryptographic hashing of all evidence records at the time of collection, stored immutably in the evidence_records table.",
+Line 654:         "description": "An optional graph database (Bolt protocol) used to persist fund-flow graphs. Falls back to in-memory/PostgreSQL if Neo4j is offline.",
+Line 663:         "description": "The primary database. Hosted on Supabase (ap-northeast-1 region). Stores all investigations, wallets, transactions, reports, VASPs, alerts, and watchlists.",
+Line 713:         "description": "The library used to render the interactive Transaction Graph with nodes, edges, zoom, pan, and minimap.",
+Line 747:         "description": "Community-sourced database of flagged wallet addresses linked to scams, ransomware, and phishing. Used as a supplementary OSINT source.",
+Line 764:         "description": "Publicly available information used in investigations. Chainabuse reports, public blockchain labels (Etherscan tags), and wallet clustering datasets are OSINT sources.",
+Line 773:         "description": "The processing power, memory, and time required to map deep multi-hop graphs. Blockchain networks process millions of transactions; tracing them recursively across many hops demands significant compute, which is managed dynamically by our background pipeline workers.",
+Line 801:         "description": "ChainSentinel handles multiple investigators working simultaneously using three interlocking mechanisms. (1) ON CONFLICT DO NOTHING: All database INSERTs use TypeORM .orIgnore() which generates PostgreSQL INSERT ... ON CONFLICT DO NOTHING. If two investigators scan the same wallet at the same time, only one record is written. The second attempt is silently discarded with zero errors or crashes. (2) Database-First Caching: Before hitting any blockchain API, the pipeline checks if those transactions already exist in the local PostgreSQL index. If yes, they are served instantly without making any external API call. This eliminates race conditions and prevents API rate-limit bans. (3) BullMQ Job Isolation: Every investigation runs as an independent background job in the BullMQ queue. Jobs do not share state, memory, or database connections. One investigation failing or running slowly cannot affect any other investigator session.",
+Line 826:         "description": "The home dashboard — shows live stats (active investigations, flagged wallets, risk distribution, recent activity) pulled from the Postgres database.",
+Line 834:         "description": "Displays all known VASPs in the database with their jurisdiction, known wallet addresses, confidence score, and chain coverage.",
+Line 842:         "description": "Search for any wallet address across all investigations. Shows transaction history, risk score, attribution history, and watchlist status.",
+Line 850:         "description": "Interactive BFS-layout graph that shows how funds flow from a suspect wallet through intermediaries to exchanges. Nodes are colour-coded by type.",
+Line 866:         "description": "Groups of related fraud wallets clustered into a single campaign. Helps identify organised cybercrime rings operating across multiple victims.",
+Line 908:         "description": "A feature that groups multiple related investigations (often involving the same criminal syndicate or related wallets) into a single overarching campaign for macro-level analysis.",
+Line 926:         "description": "A continuous monitoring system where investigators can add suspicious wallets. The system alerts the LEA instantly if the wallet makes a transaction or interacts with a VASP.",
+Line 935:         "description": "An interactive radar map and hierarchical layout rendering the multi-hop flow of funds. It helps investigators visually track how money is layered and dispersed.",
+
+apps/web\src\app\dashboard\alerts\page.tsx
+Line 145:                     {alert.walletAddress && (
+Line 146:                       <span className="font-mono">Wallet: {alert.walletAddress.substring(0, 12)}...</span>
+
+apps/web\src\app\dashboard\explorer\page.tsx
+Line 32:     wallet: Wallet,
+Line 47:           <p className="text-sm mb-4" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Search across wallets, transactions, cases, VASPs, and entities</p>
+Line 53:               placeholder="Enter wallet address, TX hash, case number, or entity name..."
+
+apps/web\src\app\globals.css
+Line 275: /* Perspective holographic grid */
+
+apps/web\src\components\AlertDetailModal.tsx
+Line 58:   const walletAddr = alert.walletAddress || alert.metadata?.walletAddress || alert.metadata?.address;
+Line 182:               {walletAddr && (
+Line 196:                       onClick={() => copyToClipboard(walletAddr, 'Wallet Address')}
+Line 204:                     {walletAddr}
+Line 208:                       href={`/dashboard/wallets/${walletAddr}`}
+Line 217:                       href={`/dashboard/graph?address=${walletAddr}`}
+
+apps/web\src\app\dashboard\graph\page.tsx
+Line 61:   wallet:    { bg: '#1e293b', border: '#334155', label: 'WALLET' },
+Line 240:             className="nodrag nopan cursor-pointer transition-transform hover:scale-110"
+Line 266: const nodeTypes = { walletNode: WalletNode };
+Line 269: // ── Hierarchical layout: BFS left→right ─────────────────────────────────────
+Line 276:   const V_GAP = 120; // ample vertical space between wallets
+Line 383:       type: 'walletNode',
+Line 388:         nodeType: isSuspect ? 'suspect' : (n.type || 'wallet'),
+Line 468:         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/graph/trace?address=${encodeURIComponent(addr)}&depth=${currentDepth}`,
+Line 489:       addToast(`Graph built: ${ln.length} wallets, ${le.length} transactions (${currentDepth} Hops)`, 'success' as any);
+Line 494:       addToast(`Failed to build graph: ${err.message}`, 'error' as any);
+Line 538:       setCenter(suspectNode.position.x + 80, suspectNode.position.y + 30, { duration: 500, zoom: 1.15 });
+Line 540:       setCenter(nodes[0].position.x + 80, nodes[0].position.y + 30, { duration: 500, zoom: 1.15 });
+Line 553:       setCenter(maxNode.position.x + 80, maxNode.position.y + 30, { duration: 500, zoom: 1.0 });
+Line 607:             Fund flow visualization — BFS hierarchical layout with multi-hop tracing & interactive radar navigation
+Line 635:           placeholder="Enter wallet address to trace (e.g. 0x28C6c06... or TXcRND...)"
+Line 749:               Enter a wallet address and click <strong>Trace</strong> to visualize the fund flow graph
+Line 752:               Tip: Click any node or transfer badge in the graph to view live balances, transfer volumes, and inspect on-chain details
+Line 775:                 zoomable={true}
+Line 786:                     setCenter(node.position.x + 80, node.position.y + 30, { duration: 400, zoom: 1.15 });
+Line 815:                   title="Fit whole graph to screen"
+Line 1078:                     href={`/dashboard/wallets/${encodeURIComponent(selectedNode.data.address)}`}
+
+apps/web\src\lib\api.ts
+Line 110: export const walletsApi = {
+Line 111:   search: (q: string) => api.get('/wallets/search', { params: { q } }),
+Line 112:   get: (address: string) => api.get(`/wallets/${address}`),
+Line 113:   getTransactions: (address: string, params?: any) => api.get(`/wallets/${address}/transactions`, { params }),
+Line 114:   getRisk: (address: string) => api.get(`/wallets/${address}/risk`),
+Line 115:   getAttribution: (address: string) => api.get(`/wallets/${address}/attribution`),
+Line 119: export const graphApi = {
+Line 120:   build: (address: string, blockchain: string, depth?: number) => api.post('/graph/build', { address, blockchain, depth }),
+Line 121:   getCaseGraph: (caseId: string) => api.get(`/graph/case/${caseId}`),
+Line 122:   traceForward: (address: string, blockchain: string, maxHops?: number) => api.post('/graph/trace/forward', { address, blockchain, maxHops }),
+Line 123:   traceBackward: (address: string, blockchain: string, maxHops?: number) => api.post('/graph/trace/backward', { address, blockchain, maxHops }),
+Line 146:   findByWallet: (address: string) => api.get(`/vasp/wallet/${address}`),
+
+apps/web\tsconfig.tsbuildinfo
+Line 1: {"fileNames":["../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es5.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2015.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2016.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2017.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2018.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2019.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2020.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2021.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2022.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2023.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2024.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.esnext.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.dom.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.dom.iterable.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2015.core.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2015.collection.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2015.generator.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2015.iterable.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2015.promise.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2015.proxy.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2015.reflect.d.ts","../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/lib/lib.es2015 (line truncated)
+
+apps/web\src\components\Header.tsx
+Line 208:             placeholder="Search wallets, cases, VASPs..."
+
+apps/web\src\app\login\page.tsx
+Line 15:   'wallet.detect()',
+Line 18:   'graph.trace(path)',
+Line 766:               draggable={false}
+
+apps/web\src\components\Sidebar.tsx
+Line 34:   { label: 'Transaction Graph', href: '/dashboard/graph', icon: Network },
+Line 36:   { label: 'Wallet Intelligence', href: '/dashboard/wallets', icon: Eye },
+
+apps/web\src\app\dashboard\settings\page.tsx
+Line 77:             { key: 'watchlistTriggers' as const, label: 'Watchlist triggers', desc: 'Alert when watched wallets have activity' },
+
+apps/web\src\app\dashboard\vasp\page.tsx
+Line 68:       (Array.isArray(v.wallets) && v.wallets.some((w: string) => w.toLowerCase().includes(searchTerm.toLowerCase())));
+Line 83:             Official repository of Virtual Asset Service Providers, FIU-IND reporting entities, compliance nodal desks, and verified wallet clusters.
+Line 99:             placeholder="Search by exchange name, jurisdiction, or wallet address..."
+Line 132:           <p className="text-xs text-slate-500 mt-1">Try searching by exchange name or wallet address</p>
+Line 137:             const walletsList: string[] = Array.isArray(vasp.wallets)
+Line 138:               ? vasp.wallets
+Line 139:               : typeof vasp.wallets === 'string'
+Line 140:               ? JSON.parse(vasp.wallets || '[]')
+Line 192:                       <span className="font-mono text-neon-cyan font-semibold">{walletsList.length} wallets</span>
+Line 307:                     {Array.isArray(activeVasp.wallets)
+Line 308:                       ? activeVasp.wallets.length
+Line 309:                       : typeof activeVasp.wallets === 'string'
+Line 310:                       ? JSON.parse(activeVasp.wallets || '[]').length
+Line 316:                     {(Array.isArray(activeVasp.wallets)
+Line 317:                       ? activeVasp.wallets
+Line 318:                       : typeof activeVasp.wallets === 'string'
+Line 319:                       ? JSON.parse(activeVasp.wallets || '[]')
+Line 321:                     ).map((walletAddr: string, idx: number) => (
+Line 326:                         <span className="font-mono text-slate-300">{walletAddr}</span>
+Line 329:                             onClick={() => copyText(walletAddr, 'Wallet address copied')}
+Line 336:                             href={`/dashboard/wallets/${walletAddr}`}
+
+apps/web\src\app\dashboard\page.tsx
+Line 11: import { casesApi, investigationsApi, alertsApi, watchlistApi, vaspApi, walletsApi, dashboardApi } from '@/lib/api';
+Line 91:   const [stats, setStats] = useState({ cases: 0, investigations: 0, alerts: 0, wallets: 0, vasps: 0, watchlist: 0 });
+Line 118:         wallets: s.suspectWallets || 0,
+Line 170:     { label: 'Suspect Wallets', value: stats.wallets, icon: Eye, color: 'bg-neon-violet/10 text-neon-violet border border-neon-violet/20', href: '/dashboard/wallets' },
+Line 214:                   <span style={{ color: isDark ? '#64748b' : '#94a3b8' }}>{r.count} wallets</span>
+Line 259:               { label: 'Transaction Graph', href: '/dashboard/graph', color: isDark ? 'rgba(167,139,250,0.1)' : 'rgba(124,58,237,0.06)', border: isDark ? 'rgba(167,139,250,0.3)' : 'rgba(124,58,237,0.2)', text: isDark ? '#a78bfa' : '#7c3aed' },
+Line 308:                     <td className="px-3 py-2 font-mono text-xs" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>{alert.walletAddress ? `${alert.walletAddress.substring(0, 8)}...` : '-'}</td>
+
+apps/web\src\lib\stores\theme.store.ts
+Line 50: // ThemeInit script in layout.tsx handles initial DOM theme before React hydration.
+
+apps/web\src\app\dashboard\wallets\page.tsx
+Line 7: import { walletsApi } from '@/lib/api';
+Line 13:   const [wallets, setWallets] = useState<any[]>([]);
+Line 22:       const { data } = await walletsApi.search(query);
+Line 64:       ) : wallets.length > 0 ? (
+Line 66:           {wallets.map((wallet, i) => (
+Line 68:               key={wallet.id}
+Line 73:               <Link href={`/dashboard/wallets/${wallet.address}`}>
+Line 76:                     <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center border', getRiskColor(wallet.riskLevel))}>
+Line 81:                         {shortenAddress(wallet.address)}
+Line 84:                         {wallet.blockchain} {wallet.label && `• ${wallet.label}`}
+Line 89:                     <span className={cn('px-2 py-1 rounded-full text-[10px] font-bold border', getRiskColor(wallet.riskLevel))}>
+Line 90:                       Risk: {wallet.riskScore || 0}
+Line 100:           <p style={{ color: isDark ? '#94a3b8' : '#64748b' }}>No wallets found</p>
+Line 105:           <p style={{ color: isDark ? '#94a3b8' : '#64748b' }}>Search for a wallet address to view intelligence</p>
+
+apps/web\src\app\dashboard\watchlist\page.tsx
+Line 41:         walletAddress: newWallet,
+Line 111:           <p style={{ color: isDark ? '#94a3b8' : '#64748b' }}>No wallets on watchlist</p>
+Line 129:                     <p className="text-sm font-mono font-bold" style={{ color: isDark ? '#ffffff' : '#101318' }}>{shortenAddress(entry.walletAddress, 8)}</p>
+Line 132:                         navigator.clipboard.writeText(entry.walletAddress);
+Line 147:                   href={`/dashboard/wallets/${encodeURIComponent(entry.walletAddress)}`}
+Line 153:                   href={`/dashboard/graph?address=${encodeURIComponent(entry.walletAddress)}&depth=3`}
+
+apps/web\src\app\dashboard\wallets\[address]\page.tsx
+Line 30: import { walletsApi } from '@/lib/api';
+Line 43:   const [wallet, setWallet] = useState<any>(null);
+Line 61:       const [walletRes, riskRes, attrRes, txRes] = await Promise.allSettled([
+Line 62:         walletsApi.get(address),
+Line 63:         walletsApi.getRisk(address),
+Line 64:         walletsApi.getAttribution(address),
+Line 65:         walletsApi.getTransactions(address, { page: 1, limit: 20, ...(forceSync ? { forceSync: true } : {}) }),
+Line 67:       if (walletRes.status === 'fulfilled') setWallet(walletRes.value.data.data);
+Line 78:             const syncRes = await walletsApi.getTransactions(address, { page: 1, limit: 20, forceSync: true });
+Line 103:       const res = await walletsApi.getTransactions(address, { page: nextPage, limit: 20 });
+Line 145:     link.setAttribute('download', `wallet_${address.slice(0, 10)}_transactions.csv`);
+Line 191:   if (!wallet) {
+Line 208:   const rawLive = wallet.metadata?.liveBalance;
+Line 211:     : (wallet.totalReceived && parseFloat(wallet.totalReceived) > 0)
+Line 212:       ? wallet.totalReceived
+Line 217:   const tokenSymbol = [REDACTED:credential] || transactions[0]?.asset || (wallet.blockchain === 'TRON' ? 'TRX' : wallet.blockchain === 'BITCOIN' ? 'BTC' : 'ETH');
+Line 218:   const usdVal = wallet.metadata?.usdValue;
+Line 232:               <span className={cn('px-2.5 py-0.5 rounded-full text-xs font-bold border uppercase tracking-wider', getRiskColor(wallet.riskLevel || 'LOW'))}>
+Line 233:                 {wallet.riskLevel || 'LOW'} RISK ({wallet.riskScore || 0}/100)
+Line 241:               <a href={getExplorerUrl(address, wallet.blockchain)} target="_blank" rel="noopener noreferrer" title="View in Explorer" className="p-1 text-neon-cyan hover:text-cyan-300">
+Line 250:             onClick={() => router.push(`/dashboard/graph?address=${encodeURIComponent(address)}&blockchain=${encodeURIComponent(wallet.blockchain || 'ETHEREUM')}`)}
+Line 303:                 {wallet.metadata?.ownerName || attribution?.legalEntity || attribution?.name || (wallet.label && !wallet.label.includes('...') ? wallet.label : 'Private Key Holder')}
+Line 316:             <p className="text-base font-bold text-white uppercase">{wallet.blockchain || 'ETHEREUM'}</p>
+Line 390:                 This address is not an exchange deposit address or omnibus hot/cold wallet. It is directly controlled by the private key holder or smart contract deployer.
+Line 403:             <span className={cn('px-2 py-0.5 rounded text-[10px] font-bold border', getRiskColor(risk?.riskLevel || wallet.riskLevel || 'LOW'))}>
+Line 404:               Score: {risk?.riskScore || wallet.riskScore || 0}/100
+Line 438:                     desc: 'Diversity count of unique funding sources sending assets into this wallet.',
+Line 614:                               href={getTxExplorerUrl(tx.txHash || tx.hash, tx.chain || wallet.blockchain)}
+
+apps/web\src\app\dashboard\new-investigation\page.tsx
+Line 10: import { casesApi, investigationsApi, walletsApi } from '@/lib/api';
+Line 61:       addToast('Please enter a complainant/victim wallet address first', 'error' as any);
+Line 70:       addToast('Invalid wallet address format. Please enter a valid Ethereum (0x...), TRON (T...), or Bitcoin address.', 'error' as any);
+Line 77:       const res = await walletsApi.getTransactions(trimmed, { page: 1, limit: 50 });
+Line 82:           'No transaction history found for this wallet. The address may be new, or transactions may not yet be indexed. You can enter the suspect address manually.',
+Line 97:           'This wallet has no outgoing transfers. It may be a receive-only address. Please check if this is the victim\'s sending wallet and try again.',
+Line 117:         victimReference: prev.victimReference || `Victim wallet: ${trimmed.substring(0, 10)}...`,
+Line 265:                 <p className="text-xs text-slate-400 mt-0.5">Specify the destination fraud wallet to trace, or auto-detect it from the victim's wallet outflow</p>
+Line 282:                   If the victim/complainant only knows their own wallet, paste their address below. The system will trace recent outward transactions and automatically select the fraud destination wallet:
+Line 288:                     placeholder="Enter complainant's wallet address (e.g., 0x... or T...)"
+Line 317:                             addToast(`Selected target wallet: ${tx.to}`, 'info' as any);
+Line 450:                   <p className="text-[10px] text-slate-400 mt-1 font-mono">Prunes dust transfers to keep graph clean</p>
+Line 491:                 <span className="font-mono" style={{ color: isDark ? '#00f0ff' : '#0891b2' }}>{form.suspectWallet || 'No wallet specified'}</span>
+
+apps/web\src\app\dashboard\cross-chain\page.tsx
+Line 102:                             <Link href={`/dashboard/wallets/${encodeURIComponent(t.sourceWallet)}`} className="text-xs font-mono font-medium hover:underline text-slate-200">
+Line 124:                             <Link href={`/dashboard/wallets/${encodeURIComponent(t.destinationWallet || '')}`} className="text-xs font-mono font-medium hover:underline text-slate-200">
+Line 156:                           href={`/dashboard/graph?address=${encodeURIComponent(t.sourceWallet)}&depth=3`}
+
+apps/web\src\app\dashboard\campaigns\page.tsx
+Line 19:   targetDemographic: string;
+Line 67:             Click on any campaign row to inspect identified target wallets, modus operandi, and initiate multi-hop traces.
+Line 154:             className="w-full max-w-2xl rounded-2xl p-6 border shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200"
+Line 200:                 <span className="font-semibold text-slate-300">Target Demographic:</span> {selectedCampaign.targetDemographic}
+Line 215:                         title="Copy wallet address"
+Line 220:                         href={`/dashboard/wallets/${encodeURIComponent(w!)}`}
+Line 226:                         href={`/dashboard/graph?address=${encodeURIComponent(w!)}`}
+Line 247:                   href={`/dashboard/graph?address=${encodeURIComponent(selectedCampaign.primarySuspect)}&depth=3`}
+
+apps/web\src\app\dashboard\glossary\page.tsx
+Line 58:       layout
+
+apps/web\src\app\dashboard\investigations\[id]\page.tsx
+Line 21:   ADDRESS_VALIDATION: 'Validating wallet address',
+Line 25:   GRAPH_BUILD: 'Building transaction graph',
+Line 182:   // Group hops into branches by sender wallet (branch source)
+Line 259:               href={`/dashboard/graph?address=${encodeURIComponent(investigation.suspectWallet)}`}
+Line 271:               href={`/dashboard/wallets/${encodeURIComponent(investigation.suspectWallet)}`}
+Line 351:               <p className="text-xl font-bold" style={{ color: isDark ? '#ffffff' : '#101318' }}>{investigation.stats.wallets || 0}</p>
+Line 435:                     { label: 'Wallets', value: investigation.stats.wallets || 0 },
+Line 446:                   All transaction hashes and block confirmations are cryptographically indexed with SHA-256 integrity verification.
+Line 530:                     'Inspect identified intermediary wallets for potential syndicate campaign links.',
+Line 569:                     href={`/dashboard/graph?address=${encodeURIComponent(investigation.suspectWallet)}&depth=${d}`}
+Line 578:                 href={`/dashboard/graph?address=${encodeURIComponent(investigation.suspectWallet)}&depth=3`}
+Line 617:                           <Link href={`/dashboard/wallets/${encodeURIComponent(hop.from)}`} className="hover:underline truncate" style={{ color: isDark ? '#cbd5e1' : '#334155' }}>
+Line 631:                           <Link href={`/dashboard/wallets/${encodeURIComponent(hop.to)}`} className="hover:underline font-semibold truncate" style={{ color: isDark ? '#00f0ff' : '#0891b2' }}>
+Line 703:                   href={`/dashboard/graph?address=${encodeURIComponent(investigation.suspectWallet)}&depth=10`}
+Line 729:                   Hierarchical fund dissemination tree showing how each wallet splits, fans out, or relays assets across hops
+Line 734:                 href={`/dashboard/graph?address=${encodeURIComponent(investigation.suspectWallet)}&depth=5`}
+Line 766:                           href={`/dashboard/wallets/${encodeURIComponent(branch.sender)}`}
+Line 807:                               href={`/dashboard/wallets/${encodeURIComponent(target.to)}`}
+Line 850:                               href={`/dashboard/graph?address=${encodeURIComponent(target.to)}&depth=3`}

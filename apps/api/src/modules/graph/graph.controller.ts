@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Query, Body, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { GraphService } from './graph.service';
+import { AddressClassifierService } from './address-classifier.service';
 import { BlockchainProviderFactory } from '../blockchain-config/blockchain-provider.factory';
 import { BlockchainType } from '@chainsentinel/types';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -11,6 +12,7 @@ export class GraphController {
   constructor(
     private readonly providerFactory: BlockchainProviderFactory,
     private readonly graphService: GraphService,
+    private readonly classifier: AddressClassifierService,
   ) {}
 
   /**
@@ -36,21 +38,74 @@ export class GraphController {
 
     const depthNum = parseInt(depth || '2', 10) || 2;
 
+    // Clear stale in-memory classification cache for this new trace
+    this.classifier.clearCache();
+
     // First try to build from real DB transactions
     const dbGraph = await this.graphService.buildGraphForAddress(address, chain, depthNum);
 
     if (dbGraph.nodes.length > 1) {
-      // Ensure edges have token for UI rendering
+      // Reclassify any nodes that are generic 'wallet' or stale 'high_risk' from old cache
+      // We throttle to 5 parallel requests every 250ms to stay within Etherscan's free tier (5 req/sec)
+      const needsClassification = dbGraph.nodes.filter((node: any) =>
+        chain === BlockchainType.ETHEREUM &&
+        /^0x[0-9a-fA-F]{40}$/.test(node.id) &&
+        (!node.type || node.type === 'wallet' || node.type === 'high_risk')
+      );
+
+      const classificationMap = new Map<string, { type: string; label: string }>();
+      for (let i = 0; i < needsClassification.length; i += 5) {
+        const batch = needsClassification.slice(i, i + 5);
+        await Promise.all(
+          batch.map(async (node: any) => {
+            const result = await this.classifier.classify(node.id, node.riskScore);
+            classificationMap.set(node.id, result);
+          })
+        );
+        if (i + 5 < needsClassification.length) await new Promise(r => setTimeout(r, 220));
+      }
+
+      const classifiedNodes = dbGraph.nodes.map((node: any) => {
+        const classified = classificationMap.get(node.id);
+        if (!classified) return node;
+        return {
+          ...node,
+          type: classified.type,
+          label: node.label && !node.label.startsWith('0x') ? node.label : classified.label,
+        };
+      });
+
       const enrichedEdges = dbGraph.edges.map((e: any) => ({
         ...e,
         token: e.token || e.asset || 'ETH',
       }));
-      return { ...dbGraph, edges: enrichedEdges, dataSource: 'DATABASE', providerName: 'Postgres Cache' };
+      return { ...dbGraph, nodes: classifiedNodes, edges: enrichedEdges, dataSource: 'DATABASE', providerName: 'Postgres Cache' };
     }
 
-    // No DB data yet — fetch live from the configured provider and build in-memory graph
+    // No DB data yet — fetch live from the configured provider
     const txData = await this.providerFactory.fetchTransactions(address);
-    const txs = txData.transactions || [];
+    const txs: any[] = [...(txData.transactions || [])];
+
+    // If multi-hop tracing is requested (depth >= 2), expand the top counterparties live!
+    if (depthNum >= 2 && txs.length > 0) {
+      const suspectLower = address.toLowerCase();
+      const topCounterparties = Array.from(new Set(
+        txs.map(t => (t.to?.toLowerCase() !== suspectLower ? t.to : t.from)?.toLowerCase()).filter(Boolean)
+      )).slice(0, 3);
+
+      for (const cp of topCounterparties) {
+        if (!cp || cp === suspectLower) continue;
+        try {
+          await new Promise(r => setTimeout(r, 250)); // throttle to stay within 5 req/sec
+          const subData = await this.providerFactory.fetchTransactions(cp);
+          if (subData.transactions?.length) {
+            txs.push(...subData.transactions.slice(0, 15));
+          }
+        } catch {
+          // continue if a sub-counterparty fails
+        }
+      }
+    }
 
     const nodesMap = new Map<string, any>();
     const edges: any[] = [];
@@ -64,26 +119,89 @@ export class GraphController {
       dataSource: txData.dataSource,
     });
 
+    // Known mixer pools (Tornado Cash, etc.)
+    const mixerAddresses = new Set([
+      '0x12d66f87a04a9e220743712ce6d9bb1b5616b8fc',
+      '0x47ce0c6ed5b0ce3d3a51fdb1c52dc66a7c3c2936',
+      '0x910cbd523d972eb0a6f4cae4618ad62622b39dbf',
+      '0xd90e2f925da726b50c4ed8d0fb90ad053324f31b',
+      '0x080e122323db33321528c7452915309d8a947e77',
+      '0xb9244a72088f11ecfdb75c0c2d26f6345851493',
+    ]);
+
+    // Detect mixer feeders (wallets transferring funds directly into mixers)
+    const mixerFeeders = new Set<string>();
+    for (const tx of txs) {
+      const to = (tx.to || '').toLowerCase();
+      const from = (tx.from || '').toLowerCase();
+      if (mixerAddresses.has(to) && from && from !== suspectKey) {
+        mixerFeeders.add(from);
+      }
+    }
+
+    // Classify all counterparty addresses in parallel (batched to avoid rate limits)
+    const counterparties = new Set<string>();
+    for (const tx of txs) {
+      const from = (tx.from || '').toLowerCase();
+      const to = (tx.to || '').toLowerCase();
+      if (from && from !== suspectKey) counterparties.add(from);
+      if (to && to !== suspectKey) counterparties.add(to);
+    }
+
+    // Classify in parallel (Etherscan free tier: 5 req/sec — batch with small delay)
+    const classificationMap = new Map<string, { type: string; label: string }>();
+    const counterpartyArr = Array.from(counterparties);
+    
+    for (let i = 0; i < counterpartyArr.length; i++) {
+      const addr = counterpartyArr[i];
+      if (mixerFeeders.has(addr)) {
+        classificationMap.set(addr, {
+          type: 'high_risk',
+          label: `High-Risk Mixer Feeder (${addr.slice(0, 6)}...${addr.slice(-4)})`,
+        });
+        continue;
+      }
+      // Only classify Ethereum addresses dynamically
+      if (chain === BlockchainType.ETHEREUM && /^0x[0-9a-fA-F]{40}$/.test(addr)) {
+        const result = await this.classifier.classify(addr);
+        if (result.type === 'mixer') {
+          mixerAddresses.add(addr);
+        }
+        classificationMap.set(addr, result);
+        // Tiny delay every 5 requests to stay within free rate limit
+        if (i > 0 && i % 5 === 0) await new Promise((r) => setTimeout(r, 250));
+      } else {
+        classificationMap.set(addr, {
+          type: 'wallet',
+          label: `${addr.slice(0, 6)}...${addr.slice(-4)}`,
+        });
+      }
+    }
+
+    // Re-check any counterparties that send to newly discovered mixers
+    for (const tx of txs) {
+      const to = (tx.to || '').toLowerCase();
+      const from = (tx.from || '').toLowerCase();
+      if (mixerAddresses.has(to) && from && from !== suspectKey && !classificationMap.get(from)?.type?.includes('mixer')) {
+        classificationMap.set(from, {
+          type: 'high_risk',
+          label: `High-Risk Mule (${from.slice(0, 6)}...${from.slice(-4)})`,
+        });
+      }
+    }
+
     for (const tx of txs) {
       const from = (tx.from || '').toLowerCase();
       const to = (tx.to || '').toLowerCase();
       if (!from || !to) continue;
 
       if (!nodesMap.has(from)) {
-        nodesMap.set(from, {
-          id: from,
-          label: this.guessLabel(from),
-          type: this.guessType(from),
-          address: from,
-        });
+        const info = classificationMap.get(from) ?? { type: 'wallet', label: `${from.slice(0, 6)}...${from.slice(-4)}` };
+        nodesMap.set(from, { id: from, label: info.label, type: info.type, address: from });
       }
       if (!nodesMap.has(to)) {
-        nodesMap.set(to, {
-          id: to,
-          label: this.guessLabel(to),
-          type: this.guessType(to),
-          address: to,
-        });
+        const info = classificationMap.get(to) ?? { type: 'wallet', label: `${to.slice(0, 6)}...${to.slice(-4)}` };
+        nodesMap.set(to, { id: to, label: info.label, type: info.type, address: to });
       }
 
       const rawAmount = tx.value || tx.amount || '0';
@@ -113,48 +231,5 @@ export class GraphController {
       dataSource: txData.dataSource,
       providerName: txData.providerName,
     };
-  }
-
-  private guessLabel(address: string): string {
-    const lower = address.toLowerCase();
-    if (lower === '0x267be1c1d684f78cb4f6a176c4911b741e4ffdc0') return 'WazirX Hot Wallet';
-    if (lower === '0x28c6c06298d514db089934071355e5743bf21d60') return 'Binance Cold Storage (14)';
-    if (lower === 'tn3w4h6rk2ce4vx9ynfqhwkennhjoxbyz7'.toLowerCase()) return 'Binance TRON Hot Wallet';
-    if (lower === 'txn3hvukebhyyr31ypcyd7ajavmuexu1ab'.toLowerCase()) return 'Shelbit Exchange (OFAC SDN)';
-    if (lower === '19d8phbjzh29us1upz4m3svyqqff8ufg9o'.toLowerCase()) return 'IRGC Cyber Unit Cluster';
-    if (lower === '1ne2nighhbkfpseynwwj7hkghgdedbtsrq'.toLowerCase()) return 'OFAC Sanctioned Ransomware Address';
-    if (lower === '1feexv6bxk2vp1xfn5v3hel54qhq818fdf'.toLowerCase()) return 'Mt. Gox Exploiter Wallet';
-    if (lower === '34xp4vrocgjym3xr7ycvpfhocnxv4twseo'.toLowerCase()) return 'Binance BTC Cold Storage';
-    if (lower === '0xd8da6bf26964af9d7eed9e03e53415d37aa96045') return 'Vitalik Buterin (vitalik.eth)';
-    if (lower === '0xdac17f958d2ee523a2206206994597c13d831ec7') return 'Tether USD (USDT) Contract';
-    if (lower === '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48') return 'USD Coin (USDC) Contract';
-    if (lower.includes('tornado') || lower === '0x8589427373d6d84e98730d7795d8f6f8731fda16' || lower === '0x722122df12d45705f05842c392bb55e76144aefa') return 'Tornado Cash Mixer';
-    if (lower.includes('uniswap') || lower === '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45' || lower === '0xe592427a0aece92de3edee1f18e0157c05861564') return 'Uniswap V3 Router';
-    if (lower.includes('thor') || lower === '0x39aC22b2063B9c64A4fC2d00b26cCcC5271Bd31B'.toLowerCase()) return 'THORChain / Axelar Bridge';
-    if (lower.includes('stargate') || lower === '0xdf0770df86a8034b3efef0a1bb3c889b8332ff56'.toLowerCase()) return 'Stargate / LayerZero Bridge';
-    if (lower.includes('lido') || lower === '0xae7ab96520de3a18e5e111b5eaab095312d7fe84') return 'Lido Staked ETH Pool';
-    if (lower.includes('foundry') || lower.includes('antpool') || lower.includes('f2pool')) return 'Mining Pool Operator';
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  }
-
-  private guessType(address: string): string {
-    const lower = address.toLowerCase();
-    if (
-      lower === '0x267be1c1d684f78cb4f6a176c4911b741e4ffdc0' ||
-      lower === '0x28c6c06298d514db089934071355e5743bf21d60' ||
-      lower === 'tn3w4h6rk2ce4vx9ynfqhwkennhjoxbyz7'.toLowerCase() ||
-      lower === '34xp4vrocgjym3xr7ycvpfhocnxv4twseo'.toLowerCase()
-    ) return 'exchange';
-    if (
-      lower === 'txn3hvukebhyyr31ypcyd7ajavmuexu1ab'.toLowerCase() ||
-      lower === '19d8phbjzh29us1upz4m3svyqqff8ufg9o'.toLowerCase() ||
-      lower === '1ne2nighhbkfpseynwwj7hkghgdedbtsrq'.toLowerCase() ||
-      lower === '1feexv6bxk2vp1xfn5v3hel54qhq818fdf'.toLowerCase()
-    ) return 'high_risk';
-    if (lower.includes('tornado') || lower === '0x8589427373d6d84e98730d7795d8f6f8731fda16' || lower === '0x722122df12d45705f05842c392bb55e76144aefa') return 'mixer';
-    if (lower.includes('uniswap') || lower === '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45' || lower === '0xe592427a0aece92de3edee1f18e0157c05861564') return 'dex';
-    if (lower.includes('thor') || lower.includes('stargate') || lower.includes('bridge') || lower === '0x39aC22b2063B9c64A4fC2d00b26cCcC5271Bd31B'.toLowerCase()) return 'bridge';
-    if (lower.includes('lido') || lower.includes('validator') || lower.includes('miner') || lower.includes('pool')) return 'miner';
-    return 'wallet';
   }
 }

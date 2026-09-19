@@ -277,7 +277,13 @@ export const Header = memo(function Header() {
       <div className="flex items-center gap-3 ml-6">
         <button 
           onClick={() => toggleDemoMode()}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all ${isDemoMode ? 'bg-amber-500/10 text-amber-500 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:text-white'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all ${
+            isDemoMode 
+              ? 'bg-amber-500/10 text-amber-500 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]' 
+              : isDark 
+                ? 'bg-slate-800/50 text-slate-400 border-slate-700 hover:text-white' 
+                : 'bg-slate-200 text-slate-600 border-slate-300 hover:text-slate-900 hover:bg-slate-300'
+          }`}
           title="Toggle Mock/Demo Data Fallback"
         >
           {isDemoMode ? 'DEMO DATA ON' : 'REAL DATA ONLY'}

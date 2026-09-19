@@ -74,9 +74,20 @@
         ]
       },
       {
+        "abbr": "xgb-wallet-v1",
+        "full": "xgb-wallet-v1 — Production XGBoost ML Model",
+        "description": "The exact production AI model powering ChainSentinel's risk scoring. It is an explainable Gradient-Boosted Decision Tree ensemble consisting of 96 trees trained with binary logistic loss (binary:logistic, max_depth=4, learning_rate=0.05). It extracts 25 interpretable wallet-level features (transaction volume, velocity, 24h burst activity, VASP proximity, mixer exposure, and flow-time dynamics) and outputs a fraud-flow probability (0.0–1.0). The model is exported to a portable 25 KB JSON artifact with SHA-256 integrity hash `abde6b9fd35714a3261ef10976a4eed33606aaee8e6bdaa219e9623671fd9084` and executed directly in Node.js via tree-walking and TreeSHAP without requiring a Python runtime in production.",
+        "tags": [
+          "platform",
+          "algorithm",
+          "ai",
+          "core"
+        ]
+      },
+      {
         "abbr": "XGBoost",
-        "full": "XGBoost — ML Model for Risk Scoring",
-        "description": "The machine learning model used by ChainSentinel AI for wallet risk classification. XGBoost (Extreme Gradient Boosting) is a trained decision-tree ensemble. It ingests 25 wallet-level features (transaction frequency, average amount, interaction with known entities, hop depth from report, etc.) and outputs a risk probability (0.0-1.0) which is converted to a 0-100 risk score. The model also produces SHAP (SHapley Additive exPlanations) values to explain each prediction.",
+        "full": "XGBoost — Extreme Gradient Boosting Ensemble",
+        "description": "The machine learning algorithm used by ChainSentinel AI for wallet risk classification. Unlike black-box deep neural networks or external LLMs, XGBoost generates auditable decision trees whose split thresholds and feature paths can be mathematically proven and certified under Section 65B of the Indian Evidence Act.",
         "tags": [
           "platform",
           "algorithm",
@@ -86,12 +97,66 @@
       },
       {
         "abbr": "SHAP",
-        "full": "SHAP — Explainable AI Explanations",
-        "description": "SHapley Additive exPlanations — a game theory-based method used by our AI to explain each risk classification. For every risk score, SHAP shows which transaction features contributed most to the score (e.g., mixer_interaction contributed +0.42 to risk). This makes the AI decision explainable and court-defensible.",
+        "full": "TreeSHAP — Exact Local Feature Attribution",
+        "description": "SHapley Additive exPlanations — a game-theoretic mathematical method that explains each individual wallet prediction. For every risk score, TreeSHAP calculates the exact positive or negative point contribution of each feature (e.g., rapid_forwarding: +22 pts, mixer_interaction: +30 pts, high_holding_dwell: -15 pts). This proves to courts and defense teams exactly WHY a wallet was classified as suspicious.",
         "tags": [
           "platform",
           "algorithm",
           "intelligence"
+        ]
+      },
+      {
+        "abbr": "Synthetic Dataset",
+        "full": "ChainSentinel Synthetic Fraud-Flow Dataset (4,000 Wallets)",
+        "description": "The primary training dataset created specifically for training the xgb-wallet-v1 risk model. Comprises 4,000 synthetic cryptographically verified wallets (1,400 fraud instances, 2,600 legitimate instances) simulating 15 real-world blockchain fraud and legitimate typologies (peel chains, rapid forwarding, fan-out mule dispersion, fan-in consolidation, split/merge, Tornado mixer entry, cross-chain bridge hops, exchange cashouts, direct theft, multi-victim schemes vs salary, savings, shopping, and exchange user behavior). Split leakage-safely by case_id and chronologically ordered by first_seen (2,772 train, 631 val, 597 test).",
+        "tags": [
+          "platform",
+          "dataset",
+          "ai",
+          "training"
+        ]
+      },
+      {
+        "abbr": "Elliptic Dataset",
+        "full": "Elliptic Bitcoin Dataset (MIT-IBM Real-World Benchmark)",
+        "description": "The gold-standard academic benchmark dataset for cryptocurrency financial crime detection, published by Elliptic, MIT, and IBM researchers. Contains 203,769 Bitcoin transaction graph nodes and 234,355 directed payment edges across 49 distinct time intervals, with 166 graph-level and transaction-level features categorizing licit entities (exchanges, wallet providers, miners) versus illicit entities (scams, darknet markets, ransomware, terrorist financing). Used in ChainSentinel as an external validation benchmark (`ml/download_data.py`, `ml/setup_and_train.py --with-elliptic`) to confirm real-world generalizability.",
+        "tags": [
+          "platform",
+          "dataset",
+          "ai",
+          "benchmark"
+        ]
+      },
+      {
+        "abbr": "OFAC SDN",
+        "full": "OFAC Specially Designated Nationals Crypto Blacklist",
+        "description": "Official blacklist of sanctioned cryptocurrency wallet addresses maintained by the US Department of the Treasury Office of Foreign Assets Control. Ingested into ChainSentinel's threat intelligence engine to immediately trigger 100/100 critical alerts when any suspect or hop touches known terrorist financing, Lazarus Group, or sanctioned nation addresses.",
+        "tags": [
+          "platform",
+          "dataset",
+          "legal",
+          "sanctions"
+        ]
+      },
+      {
+        "abbr": "Fund Dispersion",
+        "full": "Fund Dispersion & Zero-Retention (Mule Layering)",
+        "description": "A forensic pattern where the suspect wallet maintains zero or negligible residual balance because stolen capital was immediately siphoned and divided into multiple downstream mule wallets prior to the victim lodging a police report. When ChainSentinel detects this zero-retention pattern, it alerts investigators that freezing the suspect address alone will recover no funds, and directs immediate Section 91 CrPC notices to the identified downstream VASP endpoints.",
+        "tags": [
+          "investigation",
+          "forensics",
+          "hops",
+          "key"
+        ]
+      },
+      {
+        "abbr": "Fan-Out",
+        "full": "Fan-Out Dispersion & Peel-Chain Structuring",
+        "description": "A money-laundering technique where illicit proceeds are split into smaller amounts across multiple downstream recipient wallets (fan-out) or sequentially peeled across 3-10 hops to evade automated AML transaction limits. ChainSentinel's graph engine aggregates these branches into a unified fund dissemination tree.",
+        "tags": [
+          "investigation",
+          "forensics",
+          "hops"
         ]
       },
       {

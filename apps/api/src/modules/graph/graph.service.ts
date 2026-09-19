@@ -5,6 +5,7 @@ import { Neo4jService } from '../neo4j/neo4j.service';
 import { NormalizedTransaction } from '../../database/entities/normalized-transaction.entity';
 import { Wallet } from '../../database/entities/wallet.entity';
 import { GraphData, GraphNode, GraphEdge, BlockchainType } from '@chainsentinel/types';
+import { AddressClassifierService } from './address-classifier.service';
 
 @Injectable()
 export class GraphService {
@@ -14,7 +15,9 @@ export class GraphService {
     @InjectRepository(NormalizedTransaction) private txRepo: Repository<NormalizedTransaction>,
     @InjectRepository(Wallet) private walletRepo: Repository<Wallet>,
     private neo4j: Neo4jService,
+    private classifier: AddressClassifierService,
   ) {}
+
 
   async buildGraphForAddress(address: string, blockchain: BlockchainType, depth: number = 3): Promise<GraphData> {
     const cleanAddr = (address || '').trim().toLowerCase();
@@ -73,33 +76,65 @@ export class GraphService {
 
     const walletMap = new Map(wallets.map((w) => [w.address.toLowerCase(), w]));
 
-    const nodes: GraphNode[] = [];
     const nodeSet = new Set<string>();
+    const nodePromises: Promise<GraphNode>[] = [];
 
     for (const addr of addressSet) {
       if (nodeSet.has(addr)) continue;
       nodeSet.add(addr);
 
       const wallet = walletMap.get(addr);
-      const type = this.determineNodeType(addr, address, wallet);
+      const isSuspect = addr === address.toLowerCase();
       const ownerName = (wallet?.metadata as any)?.ownerName;
+      const dbLabel = wallet?.label || wallet?.entityLabel || (ownerName ? `${ownerName} (${this.shortenAddress(addr)})` : null);
 
-      nodes.push({
-        id: addr,
-        type,
-        label: wallet?.label || wallet?.entityLabel || (ownerName ? `${ownerName} (${this.shortenAddress(addr)})` : this.shortenAddress(addr)),
-        address: addr,
-        blockchain,
-        riskScore: wallet?.riskScore,
-        riskLevel: wallet?.riskLevel,
-        entityLabel: wallet?.entityLabel || undefined,
-        balance: (wallet?.metadata as any)?.liveBalance || wallet?.totalReceived,
-        totalReceived: wallet?.totalReceived,
-        totalSent: wallet?.totalSent,
-        firstSeen: wallet?.firstSeen?.toISOString(),
-        lastSeen: wallet?.lastSeen?.toISOString(),
-      });
+      nodePromises.push((async () => {
+        let type: string = isSuspect ? 'suspect' : (wallet?.entityLabel ? this.typeFromEntityLabel(wallet.entityLabel) : 'wallet');
+        let label = dbLabel || this.shortenAddress(addr);
+
+        // For unknown Ethereum addresses, ask the classifier (free Etherscan API)
+        if (!isSuspect && type === 'wallet' && /^0x[0-9a-fA-F]{40}$/.test(addr) && blockchain === BlockchainType.ETHEREUM) {
+          try {
+            const classified = await this.classifier.classify(addr, wallet?.riskScore);
+            type = classified.type;
+            label = dbLabel || classified.label;
+          } catch {
+            // classifier failed — keep defaults
+          }
+        }
+
+        // High risk override from DB score
+        if (!isSuspect && wallet?.riskScore && wallet.riskScore > 80 && type === 'wallet') {
+          type = 'high_risk';
+        }
+
+        return {
+          id: addr,
+          type: type as any,
+          label,
+          address: addr,
+          blockchain,
+          riskScore: wallet?.riskScore,
+          riskLevel: wallet?.riskLevel,
+          entityLabel: wallet?.entityLabel || undefined,
+          balance: (wallet?.metadata as any)?.liveBalance || wallet?.totalReceived,
+          totalReceived: wallet?.totalReceived,
+          totalSent: wallet?.totalSent,
+          firstSeen: wallet?.firstSeen?.toISOString(),
+          lastSeen: wallet?.lastSeen?.toISOString(),
+        } as GraphNode;
+      })());
     }
+
+    // Throttle: process classifier calls 5 at a time to stay in free-tier limits
+    const nodes: GraphNode[] = [];
+    for (let i = 0; i < nodePromises.length; i += 5) {
+      const batch = await Promise.all(nodePromises.slice(i, i + 5));
+      nodes.push(...batch);
+      if (i + 5 < nodePromises.length) await new Promise(r => setTimeout(r, 250));
+    }
+
+
 
     const edges: GraphEdge[] = [];
     for (const tx of allTxs) {
@@ -305,14 +340,15 @@ export class GraphService {
     }
   }
 
-  private determineNodeType(address: string, suspectAddress: string, wallet?: Wallet): GraphNode['type'] {
-    if (address === suspectAddress) return 'suspect';
-    if (wallet?.entityLabel?.includes('exchange')) return 'exchange';
-    if (wallet?.entityLabel?.includes('vasp')) return 'vasp';
-    if (wallet?.entityLabel?.includes('dex')) return 'dex';
-    if (wallet?.entityLabel?.includes('bridge')) return 'bridge';
-    if (wallet?.entityLabel?.includes('mixer')) return 'mixer';
-    if (wallet?.riskScore && wallet.riskScore > 80) return 'high_risk';
+  /** Derive entity type from the DB's entityLabel field (populated by Threat Intel feeds) */
+  private typeFromEntityLabel(entityLabel: string): GraphNode['type'] {
+    const l = (entityLabel || '').toLowerCase();
+    if (l.includes('exchange') || l.includes('vasp') || l.includes('cex')) return 'exchange';
+    if (l.includes('dex') || l.includes('swap') || l.includes('amm')) return 'dex';
+    if (l.includes('bridge') || l.includes('relay') || l.includes('cross')) return 'bridge';
+    if (l.includes('mixer') || l.includes('tumbl') || l.includes('privacy')) return 'mixer';
+    if (l.includes('miner') || l.includes('pool') || l.includes('validator') || l.includes('staking')) return 'infra';
+    if (l.includes('high') || l.includes('risk') || l.includes('sanction') || l.includes('hack')) return 'high_risk';
     return 'wallet';
   }
 

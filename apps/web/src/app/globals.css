@@ -713,3 +713,120 @@ body {
   border-color: rgba(0, 0, 0, 0.07) !important;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.04) !important;
 }
+
+/* ── Light Mode Button & Accent Enhancements ────────────────── */
+[data-theme='light'] .text-neon-cyan,
+.light .text-neon-cyan {
+  color: #0891b2 !important;
+}
+
+[data-theme='light'] .text-neon-green,
+.light .text-neon-green {
+  color: #059669 !important;
+}
+
+[data-theme='light'] .text-neon-violet,
+.light .text-neon-violet {
+  color: #7c3aed !important;
+}
+
+[data-theme='light'] .text-neon-red,
+.light .text-neon-red {
+  color: #dc2626 !important;
+}
+
+[data-theme='light'] .text-neon-amber,
+.light .text-neon-amber {
+  color: #d97706 !important;
+}
+
+/* Light mode primary action buttons */
+[data-theme='light'] .bg-neon-cyan,
+.light .bg-neon-cyan {
+  background-color: #0891b2 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(8, 145, 178, 0.3) !important;
+  box-shadow: 0 2px 6px rgba(8, 145, 178, 0.25) !important;
+}
+
+[data-theme='light'] .bg-neon-cyan:hover:not(:disabled),
+.light .bg-neon-cyan:hover:not(:disabled) {
+  background-color: #0e7490 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.35) !important;
+}
+
+/* Light mode tinted secondary buttons */
+[data-theme='light'] .bg-neon-cyan\/10,
+[data-theme='light'] .bg-neon-cyan\/15,
+[data-theme='light'] .bg-neon-cyan\/20,
+.light .bg-neon-cyan\/10,
+.light .bg-neon-cyan\/15,
+.light .bg-neon-cyan\/20 {
+  background-color: rgba(8, 145, 178, 0.1) !important;
+  color: #0891b2 !important;
+  border-color: rgba(8, 145, 178, 0.25) !important;
+}
+
+[data-theme='light'] .bg-neon-cyan\/10:hover,
+[data-theme='light'] .bg-neon-cyan\/15:hover,
+[data-theme='light'] .bg-neon-cyan\/20:hover,
+.light .bg-neon-cyan\/10:hover,
+.light .bg-neon-cyan\/15:hover,
+.light .bg-neon-cyan\/20:hover {
+  background-color: rgba(8, 145, 178, 0.18) !important;
+  color: #0e7490 !important;
+  border-color: rgba(8, 145, 178, 0.45) !important;
+}
+
+/* Light mode dark-slate buttons transformed into clean, crisp cards */
+[data-theme='light'] button.bg-slate-800,
+[data-theme='light'] button.bg-slate-900,
+[data-theme='light'] button.bg-slate-900\/40,
+[data-theme='light'] a.bg-slate-800,
+[data-theme='light'] a.bg-slate-900,
+.light button.bg-slate-800,
+.light button.bg-slate-900,
+.light button.bg-slate-900\/40,
+.light a.bg-slate-800,
+.light a.bg-slate-900 {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme='light'] button.bg-slate-800:hover,
+[data-theme='light'] button.bg-slate-900:hover,
+[data-theme='light'] a.bg-slate-800:hover,
+[data-theme='light'] a.bg-slate-900:hover,
+.light button.bg-slate-800:hover,
+.light button.bg-slate-900:hover,
+.light a.bg-slate-800:hover,
+.light a.bg-slate-900:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+/* Light mode general buttons baseline styling */
+[data-theme='light'] button,
+.light button {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Light mode primary CTA styling */
+[data-theme='light'] .btn-primary,
+.light .btn-primary {
+  background: linear-gradient(135deg, #0891b2 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(8, 145, 178, 0.4) !important;
+  box-shadow: 0 2px 6px rgba(8, 145, 178, 0.25) !important;
+  font-weight: 600 !important;
+}
+
+[data-theme='light'] .btn-primary:hover:not(:disabled),
+.light .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0e7490 0%, #0369a1 100%) !important;
+  box-shadow: 0 4px 14px rgba(8, 145, 178, 0.35) !important;
+}

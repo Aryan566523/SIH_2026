@@ -52,3 +52,7 @@ ml/__pycache__/
 ml/.pytest_cache/
 ml/**/__pycache__/
 *.pyc
+
+# Kilo
+.kilo
+.kilo/
